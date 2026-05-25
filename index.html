@@ -470,6 +470,7 @@ function loadCache(){
     State.pendientes_actualizaciones = s.pendientes_actualizaciones || [];
     State.asignaciones = s.asignaciones || [];
     State.meta = s.meta || [];
+    normalizeState_();
     return true;
   }catch(e){ return false; }
 }
@@ -552,6 +553,18 @@ async function pingBackend(){
 }
 
 /* -------- Load all -------- */
+function normalizeState_(){
+  const sId = v => v === '' || v === null || v === undefined ? '' : String(v);
+  const nMes = v => Number(v) || v;
+  State.equipos.forEach(e => { e.id = sId(e.id); });
+  State.programacion.forEach(r => { r.equipo_id = sId(r.equipo_id); r.mes = nMes(r.mes); });
+  State.registro.forEach(r => { r.equipo_id = sId(r.equipo_id); r.mes = nMes(r.mes); });
+  State.eventos.forEach(r => { r.id = sId(r.id); r.equipo_id = sId(r.equipo_id); });
+  State.pendientes.forEach(r => { r.id = sId(r.id); r.equipo_id = sId(r.equipo_id); });
+  State.pendientes_tareas.forEach(r => { r.id = sId(r.id); r.pendiente_id = sId(r.pendiente_id); });
+  State.pendientes_actualizaciones.forEach(r => { r.id = sId(r.id); r.pendiente_id = sId(r.pendiente_id); });
+  State.asignaciones.forEach(r => { r.equipo_id = sId(r.equipo_id); r.mes = nMes(r.mes); });
+}
 async function loadAll(){
   if(!State.cfg.sheetId || !State.cfg.scriptUrl){
     toast('Falta configuración', 'warn');
@@ -571,6 +584,7 @@ async function loadAll(){
     State.pendientes_actualizaciones = d.pendientes_actualizaciones || [];
     State.asignaciones = d.asignaciones || [];
     State.meta = d.meta || [];
+    normalizeState_();
     saveCache();
     renderAll();
     toast('Datos cargados', 'success');
@@ -848,9 +862,10 @@ function populateSearchSelects(){
 
 /* -------- Drawer equipo -------- */
 function openEquipo(id){
-  const e = State.equipos.find(x => x.id === id);
+  const sId = String(id);
+  const e = State.equipos.find(x => String(x.id) === sId);
   if(!e){ toast('Equipo no encontrado','error'); return; }
-  State.currentEquipoId = id;
+  State.currentEquipoId = e.id;
   document.getElementById('drawerTitle').textContent = e.equipo || '(sin nombre)';
   document.getElementById('drawer').classList.add('open');
   renderDrawer();
