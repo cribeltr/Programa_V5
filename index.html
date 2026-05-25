@@ -635,10 +635,11 @@ function renderProgramacion(){
   const equipos = State.equipos.filter(e => !truthy(e.es_slot_disponible));
   const progMap = new Map();
   State.programacion.forEach(p => progMap.set(p.equipo_id+'_'+p.mes, p.codigo));
+  const lc = v => String(v == null ? '' : v).toLowerCase();
   const filtered = equipos.filter(e => {
     if(servFilt && e.servicio !== servFilt) return false;
     if(!filt) return true;
-    return (e.equipo||'').toLowerCase().includes(filt) || (e.serie||'').toLowerCase().includes(filt) || (e.n_inventario||'').toLowerCase().includes(filt) || (e.servicio||'').toLowerCase().includes(filt);
+    return lc(e.equipo).includes(filt) || lc(e.serie).includes(filt) || lc(e.n_inventario).includes(filt) || lc(e.servicio).includes(filt);
   });
   let html = '<thead><tr><th class="col-equipo">Equipo</th><th>Serie</th><th>Servicio</th>';
   for(let m=1;m<=12;m++) html += `<th>${MESES_ABR[m-1]}</th>`;
@@ -663,7 +664,8 @@ function renderResultados(){
   const equipos = State.equipos.filter(e => !truthy(e.es_slot_disponible));
   const regMap = new Map();
   State.registro.forEach(r => regMap.set(r.equipo_id+'_'+r.mes, r));
-  const filtered = equipos.filter(e => !filt || (e.equipo||'').toLowerCase().includes(filt) || (e.serie||'').toLowerCase().includes(filt) || (e.n_inventario||'').toLowerCase().includes(filt));
+  const lc = v => String(v == null ? '' : v).toLowerCase();
+  const filtered = equipos.filter(e => !filt || lc(e.equipo).includes(filt) || lc(e.serie).includes(filt) || lc(e.n_inventario).includes(filt));
   let html = '<thead><tr><th class="col-equipo" rowspan="2">Equipo</th><th rowspan="2">Servicio</th>';
   for(let m=1;m<=12;m++) html += `<th colspan="2">${MESES_ABR[m-1]}</th>`;
   html += '</tr><tr>';
@@ -746,7 +748,7 @@ function renderInventario(){
   const equipos = State.equipos.filter(e => {
     if(estado && e.estado_actual !== estado) return false;
     if(!filt) return true;
-    return Object.values(e).some(v => String(v||'').toLowerCase().includes(filt));
+    return Object.values(e).some(v => String(v == null ? '' : v).toLowerCase().includes(filt));
   });
   let html = '<thead><tr><th>N° Inv.</th><th>Equipo</th><th>Servicio</th><th>Marca/Modelo</th><th>Serie</th><th>Estado</th><th>Responsable</th></tr></thead><tbody>';
   equipos.forEach(e => {
@@ -785,7 +787,7 @@ function renderPendientes(){
       if(String(m) !== mesF) return false;
     }
     if(!filt) return true;
-    return Object.values(p).some(v => String(v||'').toLowerCase().includes(filt));
+    return Object.values(p).some(v => String(v == null ? '' : v).toLowerCase().includes(filt));
   });
   // Limpiar selección de IDs ya filtrados fuera
   const visibleIds = new Set(items.map(p => p.id));
@@ -1202,15 +1204,24 @@ function openPendiente(id){
 function setupGlobalSearch(){
   const inp = document.getElementById('globalSearch');
   const dd = document.getElementById('searchDD');
-  inp.addEventListener('input', ()=>{
+  const ls = v => String(v == null ? '' : v).toLowerCase();
+  const doSearch = ()=>{
     const q = inp.value.trim().toLowerCase();
     if(!q){ dd.classList.remove('open'); dd.innerHTML=''; return; }
-    const matches = State.equipos.filter(e => (e.serie||'').toLowerCase().includes(q) || (e.n_inventario||'').toLowerCase().includes(q)).slice(0,20);
+    const matches = State.equipos.filter(e =>
+      ls(e.serie).includes(q) ||
+      ls(e.n_inventario).includes(q) ||
+      ls(e.equipo).includes(q) ||
+      ls(e.servicio).includes(q) ||
+      ls(e.n_carpeta).includes(q)
+    ).slice(0,20);
     if(!matches.length){ dd.innerHTML = '<div class="it muted">Sin resultados</div>'; dd.classList.add('open'); return; }
-    dd.innerHTML = matches.map(e => `<div class="it" data-id="${e.id}">${escapeHtml(e.equipo||'(sin nombre)')}<small>Inv: ${escapeHtml(e.n_inventario||'')} · Serie: ${escapeHtml(e.serie||'')} · ${escapeHtml(e.servicio||'')}</small></div>`).join('');
+    dd.innerHTML = matches.map(e => `<div class="it" data-id="${escapeHtml(e.id)}">${escapeHtml(e.equipo||'(sin nombre)')}<small>Inv: ${escapeHtml(e.n_inventario||'')} · Serie: ${escapeHtml(e.serie||'')} · ${escapeHtml(e.servicio||'')}</small></div>`).join('');
     dd.classList.add('open');
     dd.querySelectorAll('.it[data-id]').forEach(it => it.onclick = ()=>{ openEquipo(it.dataset.id); dd.classList.remove('open'); inp.value=''; });
-  });
+  };
+  inp.addEventListener('input', doSearch);
+  inp.addEventListener('focus', ()=>{ if(inp.value.trim()) doSearch(); });
   document.addEventListener('click', e => { if(!inp.contains(e.target) && !dd.contains(e.target)) dd.classList.remove('open'); });
 }
 
