@@ -16,8 +16,14 @@
   --radius:10px; --radius-sm:6px;
   --sidebar-w:240px; --header-h:56px;
 }
+:root[data-theme="dark"]{
+  --bg:#0b0d10; --surface:#14171b; --surface-2:#1a1e23; --border:#262b31; --border-strong:#363c43;
+  --text:#e5e7eb; --text-muted:#9ca3af; --text-soft:#6b7280;
+  --accent:#3b82f6; --accent-hover:#60a5fa; --accent-soft:#172033;
+  --shadow:0 4px 12px rgba(0,0,0,.4); --shadow-lg:0 10px 30px rgba(0,0,0,.5);
+}
 @media (prefers-color-scheme: dark){
-  :root{
+  :root:not([data-theme="light"]):not([data-theme="dark"]){
     --bg:#0b0d10; --surface:#14171b; --surface-2:#1a1e23; --border:#262b31; --border-strong:#363c43;
     --text:#e5e7eb; --text-muted:#9ca3af; --text-soft:#6b7280;
     --accent:#3b82f6; --accent-hover:#60a5fa; --accent-soft:#172033;
@@ -81,7 +87,8 @@ label.field .input,label.field select,label.field textarea{font-size:13.5px;colo
 .grid th,.grid td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:middle}
 .grid th{position:sticky;top:0;background:var(--surface-2);font-weight:600;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;z-index:2}
 .grid tbody tr:nth-child(even) td{background:rgba(0,0,0,.02)}
-@media (prefers-color-scheme: dark){.grid tbody tr:nth-child(even) td{background:rgba(255,255,255,.02)}}
+:root[data-theme="dark"] .grid tbody tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]):not([data-theme="dark"]) .grid tbody tr:nth-child(even) td{background:rgba(255,255,255,.02)}}
 .grid tbody tr:hover td{background:var(--accent-soft)}
 .grid .clickable{color:var(--accent);cursor:pointer;text-decoration:none}
 .grid .clickable:hover{text-decoration:underline}
@@ -103,18 +110,28 @@ label.field .input,label.field select,label.field textarea{font-size:13.5px;colo
 .tag.operativo{background:#dcfce7;color:#166534}
 .tag.no_operativo{background:#fee2e2;color:#991b1b}
 .tag.disponible{background:#e0e7ff;color:#3730a3}
+:root[data-theme="dark"] .tag.X,
+:root:not([data-theme="light"]) .dark-tags .tag.X{background:#1e3a8a;color:#bfdbfe}
+:root[data-theme="dark"] .tag.R,:root[data-theme="dark"] .tag.RA{background:#78350f;color:#fde68a}
+:root[data-theme="dark"] .tag.PM,:root[data-theme="dark"] .tag.Si,:root[data-theme="dark"] .tag.resuelto,:root[data-theme="dark"] .tag.operativo{background:#14532d;color:#bbf7d0}
+:root[data-theme="dark"] .tag.FS,:root[data-theme="dark"] .tag.no_operativo{background:#7f1d1d;color:#fecaca}
+:root[data-theme="dark"] .tag.Baja,:root[data-theme="dark"] .tag.ignorado{background:#374151;color:#d1d5db}
+:root[data-theme="dark"] .tag.NU{background:#831843;color:#fbcfe8}
+:root[data-theme="dark"] .tag.C1,:root[data-theme="dark"] .tag.C2,:root[data-theme="dark"] .tag.C3,:root[data-theme="dark"] .tag.C4,:root[data-theme="dark"] .tag.C5,:root[data-theme="dark"] .tag.C6,:root[data-theme="dark"] .tag.C7,:root[data-theme="dark"] .tag.C8,:root[data-theme="dark"] .tag.en_trabajo{background:#78350f;color:#fde68a}
+:root[data-theme="dark"] .tag.abierto{background:#1e3a8a;color:#bfdbfe}
+:root[data-theme="dark"] .tag.disponible{background:#312e81;color:#c7d2fe}
 @media (prefers-color-scheme: dark){
-  .tag.X{background:#1e3a8a;color:#bfdbfe}
-  .tag.R,.tag.RA{background:#78350f;color:#fde68a}
-  .tag.PM,.tag.Si,.tag.resuelto,.tag.operativo{background:#14532d;color:#bbf7d0}
-  .tag.FS,.tag.no_operativo{background:#7f1d1d;color:#fecaca}
-  .tag.Baja,.tag.ignorado{background:#374151;color:#d1d5db}
-  .tag.NU{background:#831843;color:#fbcfe8}
-  .tag.C1,.tag.C2,.tag.C3,.tag.C4,.tag.C5,.tag.C6,.tag.C7,.tag.C8,.tag.en_trabajo{background:#78350f;color:#fde68a}
-  .tag.abierto{background:#1e3a8a;color:#bfdbfe}
-  .tag.disponible{background:#312e81;color:#c7d2fe}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .tag.X{background:#1e3a8a;color:#bfdbfe}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .tag.R,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.RA{background:#78350f;color:#fde68a}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .tag.PM,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.Si,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.resuelto,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.operativo{background:#14532d;color:#bbf7d0}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .tag.FS,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.no_operativo{background:#7f1d1d;color:#fecaca}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .tag.Baja,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.ignorado{background:#374151;color:#d1d5db}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .tag.NU{background:#831843;color:#fbcfe8}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .tag.C1,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.C2,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.C3,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.C4,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.C5,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.C6,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.C7,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.C8,:root:not([data-theme="light"]):not([data-theme="dark"]) .tag.en_trabajo{background:#78350f;color:#fde68a}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .tag.abierto{background:#1e3a8a;color:#bfdbfe}
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .tag.disponible{background:#312e81;color:#c7d2fe}
 }
-.overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);z-index:120;display:none;align-items:center;justify-content:center}
 .overlay.open{display:flex}
 .modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:min(560px,94vw);max-height:90vh;overflow:auto}
 .modal .mhead{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
@@ -199,6 +216,7 @@ label.field .input,label.field select,label.field textarea{font-size:13.5px;colo
     </div>
     <div class="header-spacer"></div>
     <span class="pill" id="connPill">●  Sin conectar</span>
+    <button class="icon-btn" id="btnTheme" title="Cambiar tema (claro/oscuro/auto)">◐</button>
     <button class="icon-btn" id="btnRefresh" title="Recargar datos del Sheet">↻</button>
     <button class="icon-btn" id="btnConfigHdr" title="Configuración">⚙</button>
   </header>
@@ -403,7 +421,7 @@ const State = {
   currentEquipoId:null,
 };
 
-/* -------- localStorage cfg -------- */
+/* -------- localStorage cfg + cache -------- */
 function loadCfg(){
   try{
     const raw = localStorage.getItem('pmp2026_cfg');
@@ -412,6 +430,59 @@ function loadCfg(){
 }
 function saveCfg(){
   localStorage.setItem('pmp2026_cfg', JSON.stringify(State.cfg));
+}
+const CACHE_KEY = 'pmp2026_cache';
+function saveCache(){
+  try{
+    const snap = {
+      equipos: State.equipos, programacion: State.programacion, registro: State.registro,
+      eventos: State.eventos, pendientes: State.pendientes, pendientes_tareas: State.pendientes_tareas,
+      pendientes_actualizaciones: State.pendientes_actualizaciones, asignaciones: State.asignaciones,
+      meta: State.meta, cached_at: new Date().toISOString()
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(snap));
+  }catch(e){ /* quota exceeded → ignorar */ }
+}
+function loadCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return false;
+    const s = JSON.parse(raw);
+    State.equipos = s.equipos || [];
+    State.programacion = s.programacion || [];
+    State.registro = s.registro || [];
+    State.eventos = s.eventos || [];
+    State.pendientes = s.pendientes || [];
+    State.pendientes_tareas = s.pendientes_tareas || [];
+    State.pendientes_actualizaciones = s.pendientes_actualizaciones || [];
+    State.asignaciones = s.asignaciones || [];
+    State.meta = s.meta || [];
+    return true;
+  }catch(e){ return false; }
+}
+/* -------- Tema claro/oscuro/auto -------- */
+function applyTheme(t){
+  const r = document.documentElement;
+  if(t === 'light' || t === 'dark') r.setAttribute('data-theme', t);
+  else r.removeAttribute('data-theme');
+  const btn = document.getElementById('btnTheme');
+  if(btn){
+    btn.textContent = t === 'dark' ? '☾' : (t === 'light' ? '☀' : '◐');
+    btn.title = 'Tema: ' + (t === 'auto' ? 'auto (sistema)' : t) + ' — clic para cambiar';
+  }
+}
+function loadTheme(){
+  let t = 'auto';
+  try{ t = localStorage.getItem('pmp2026_theme') || 'auto'; }catch(e){}
+  applyTheme(t);
+  return t;
+}
+function cycleTheme(){
+  const cur = (localStorage.getItem('pmp2026_theme') || 'auto');
+  const next = cur === 'auto' ? 'light' : (cur === 'light' ? 'dark' : 'auto');
+  localStorage.setItem('pmp2026_theme', next);
+  applyTheme(next);
+  toast('Tema: ' + next, 'success');
 }
 
 /* -------- Toasts -------- */
@@ -453,6 +524,7 @@ async function apiPost(action, payload){
 /* -------- Ping / connection -------- */
 async function pingBackend(){
   const pill = document.getElementById('connPill');
+  pill.style.color = 'var(--text-muted)';
   pill.textContent = '● Conectando…';
   try{
     const j = await apiGet('ping');
@@ -486,6 +558,7 @@ async function loadAll(){
     State.pendientes_actualizaciones = d.pendientes_actualizaciones || [];
     State.asignaciones = d.asignaciones || [];
     State.meta = d.meta || [];
+    saveCache();
     renderAll();
     toast('Datos cargados', 'success');
   }catch(e){
@@ -1258,6 +1331,16 @@ function computeDiffs(parsed){
   parsed.equipos.forEach(e => { if(!oldEq.has(e.id)) diffs.push({equipo_id:e.id, descripcion:`Equipo nuevo detectado: ${e.equipo} (${e.n_inventario||e.serie||''})`}); });
   // Equipos eliminados
   State.equipos.forEach(e => { if(!newEq.has(e.id)) diffs.push({equipo_id:e.id, descripcion:`Equipo ya no aparece en el maestro: ${e.equipo}`}); });
+  // Cambios en campos del equipo
+  const camposComparar = ['servicio','unidad','ubicacion','marca','modelo','serie','n_inventario','frecuencia_mp','clasificacion','enu_baja','vida_util_residual'];
+  parsed.equipos.forEach(ne => {
+    const oe = oldEq.get(ne.id);
+    if(!oe) return;
+    camposComparar.forEach(f => {
+      const a = String(oe[f]||'').trim(), b = String(ne[f]||'').trim();
+      if(a !== b) diffs.push({equipo_id:ne.id, descripcion:`Cambio en ${f}: ${ne.equipo}: "${a}" → "${b}"`});
+    });
+  });
   // Programación distinta
   const oldProg = new Map(State.programacion.map(p => [p.equipo_id+'_'+p.mes, p.codigo]));
   parsed.programacion.forEach(p => {
@@ -1298,9 +1381,13 @@ async function descargarPlantilla(){
   XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
   // Generar xlsx en memoria
   const xlsxBuf = XLSX.write(wb, {bookType:'xlsx', type:'array'});
-  // Inyectar dataValidation con JSZip
+  // Inyectar dataValidation con JSZip (busca el sheet xml dinámicamente)
   const zip = await JSZip.loadAsync(xlsxBuf);
-  const sheetPath = 'xl/worksheets/sheet1.xml';
+  let sheetPath = 'xl/worksheets/sheet1.xml';
+  if(!zip.file(sheetPath)){
+    const candidate = Object.keys(zip.files).find(p => /xl\/worksheets\/sheet\d+\.xml$/i.test(p));
+    if(candidate) sheetPath = candidate;
+  }
   let sheetXml = await zip.file(sheetPath).async('string');
   const last = rows.length + 1; // fila final (1-indexed incluye header)
   const ejecCsv = EJECUTORES.join(',');
@@ -1334,14 +1421,20 @@ async function subirPlantilla(){
     const idxEq = headers.findIndex(h=>h.toLowerCase().startsWith('equipo_id'));
     const idxMes = headers.findIndex(h=>h.toLowerCase().startsWith('mes'));
     if(idxResp<0 || idxEq<0 || idxMes<0) throw new Error('Plantilla con columnas inesperadas. Descarga una plantilla nueva.');
+    const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+    const ejecMap = new Map(EJECUTORES.map(e => [norm(e), e]));
     const rows = [];
     for(let i=1;i<aoa.length;i++){
       const r = aoa[i];
-      const resp = String(r[idxResp]||'').trim();
+      let resp = String(r[idxResp]||'').trim();
       const eq = String(r[idxEq]||'').trim();
       const mes = Number(r[idxMes]);
       if(!eq || !mes) continue;
-      if(resp && !EJECUTORES.includes(resp)){ toast(`Responsable inválido en fila ${i+1}: "${resp}"`,'warn'); continue; }
+      if(resp){
+        const match = ejecMap.get(norm(resp));
+        if(!match){ toast(`Responsable inválido en fila ${i+1}: "${resp}"`,'warn'); continue; }
+        resp = match;
+      }
       rows.push({equipo_id:eq, mes, responsable: resp, updated_at:new Date().toISOString()});
     }
     if(!rows.length){ toast('No hay asignaciones para guardar','warn'); return; }
@@ -1425,13 +1518,18 @@ function setupEvents(){
   document.getElementById('filtPendMes').onchange = renderPendientes;
   document.getElementById('qRun1').onclick = busquedaEjecutorMes;
   document.getElementById('qRun2').onclick = busquedaPendientesMes;
+  document.getElementById('btnTheme').onclick = cycleTheme;
   setupGlobalSearch();
   document.addEventListener('keydown', e => { if(e.key === 'Escape'){ closeModal(); closeEquipo(); } });
 }
 
 async function init(){
   loadCfg();
+  loadTheme();
   setupEvents();
+  // Hidratar desde caché para render instantáneo al refrescar
+  const hadCache = loadCache();
+  if(hadCache) renderAll();
   populateSearchSelects();
   if(!State.cfg.sheetId || !State.cfg.scriptUrl){
     showView('config');
@@ -1440,7 +1538,10 @@ async function init(){
   }
   const ok = await pingBackend();
   if(ok){ await loadAll(); }
-  else { showView('config'); toast('No se pudo conectar al backend','error'); }
+  else {
+    if(hadCache) toast('Sin conexión: mostrando datos en caché. Reintentar con ↻','warn');
+    else { showView('config'); toast('No se pudo conectar al backend','error'); }
+  }
 }
 
 init();
