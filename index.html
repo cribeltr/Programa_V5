@@ -1236,7 +1236,9 @@ async function handleLoadMaster(){
     const wb = XLSX.read(buf, {type:'array', cellDates:false});
     if(!wb.Sheets['PMP_2026'] && !wb.Sheets['Registro_MP-2026']) throw new Error('No se encuentran las hojas PMP_2026 ni Registro_MP-2026');
     const parsed = parseMaster(wb);
-    status.textContent = `Parseado: ${parsed.equipos.length} equipos, ${parsed.programacion.length} celdas prog, ${parsed.registro.length} celdas registro.`;
+    const dbg = State._registroDebug || {};
+    status.textContent = `Parseado: ${parsed.equipos.length} equipos, ${parsed.programacion.length} celdas prog, ${parsed.registro.length} celdas registro` + (dbg.headerRow ? ` (cab fila ${dbg.headerRow}, ${dbg.hasSub?'con':'sin'} sub P/R, datos desde fila ${dbg.dataStart}, ${dbg.matchedRows||0} filas matched, ${dbg.unmatchedRows||0} no encontradas)` : '') + '.';
+    if(parsed.registro.length === 0 && parsed.equipos.length > 0) toast('Atención: 0 celdas de registro parseadas. Revisa hoja "Registro_MP-2026".', 'warn');
     // Detectar diferencias contra State actual
     const diffs = computeDiffs(parsed);
     // Subir al Sheet
@@ -1341,64 +1343,109 @@ function parseMaster(wb){
   }
   if(shReg){
     const aoa = XLSX.utils.sheet_to_json(shReg, {header:1, defval:'', raw:true});
-    if(aoa.length >= 8){
-      const h7 = aoa[6].map(h => String(h||'').trim());
-      // Encontrar columnas de mes (cabecera fila 7) y sub-cabeceras P/R (fila 8 quizás)
-      // Estrategia: para cada mes, buscar su columna; las dos siguientes son P y R
-      const subHeaders = aoa[7] || [];
-      const mesPositions = [];
-      MESES.forEach((m,i)=>{
-        for(let c=0;c<h7.length;c++){
-          if(h7[c].toLowerCase() === m.toLowerCase()){
-            // buscar P y R en filas h7 o subHeaders
-            let pCol = -1, rCol = -1;
-            for(let cc=c; cc<c+4 && cc<h7.length; cc++){
-              const sh1 = String(h7[cc]||'').trim().toUpperCase();
-              const sh2 = String(subHeaders[cc]||'').trim().toUpperCase();
-              if(sh1==='P' || sh2==='P') pCol = cc;
-              if(sh1==='R' || sh2==='R') rCol = cc;
-            }
-            if(pCol < 0) pCol = c;
-            if(rCol < 0) rCol = c+1;
-            mesPositions.push({mes:i+1, pCol, rCol});
-            break;
-          }
-        }
-      });
-      // Mapear inventario→id ya existente en equipos
-      const invToId = new Map();
-      const serieToId = new Map();
-      equipos.forEach(e => { if(e.n_inventario) invToId.set(e.n_inventario, e.id); if(e.serie) serieToId.set(e.serie, e.id); });
-      // Buscar columnas de identificación
-      const idxMap = {};
-      h7.forEach((h,i)=> idxMap[h.toLowerCase()] = i);
-      const invCol = idxMap['n° inventario'] ?? idxMap['nº inventario'] ?? idxMap['inventario'] ?? -1;
-      const serieCol = idxMap['serie'] ?? idxMap['n° serie'] ?? idxMap['nº serie'] ?? -1;
-      for(let r=8;r<aoa.length;r++){
-        const row = aoa[r];
-        if(!row || row.every(v => v==='' || v==null)) continue;
-        const inv = invCol>=0 ? String(row[invCol]||'').trim() : '';
-        const ser = serieCol>=0 ? String(row[serieCol]||'').trim() : '';
-        let eqId = invToId.get(inv) || serieToId.get(ser);
-        if(!eqId) continue;
-        mesPositions.forEach(mp => {
-          const p = String(row[mp.pCol]||'').trim().toUpperCase();
-          const res = String(row[mp.rCol]||'').trim();
-          if(p || res){
-            registro.push({
-              equipo_id: eqId,
-              mes: mp.mes,
-              programacion: ['X','R','RA','PM'].includes(p) ? p : '',
-              resultado: res || '',
-              ejecutor: '',
-              updated_at: new Date().toISOString()
-            });
-          }
-        });
-      }
-    }
+    const dbg = parseRegistro_(aoa, equipos);
+    dbg.rows.forEach(r => registro.push(r));
+    State._registroDebug = {headerRow: dbg.headerRow+1, hasSub: dbg.hasSub, dataStart: dbg.dataStart+1, mesPositions: dbg.mesPositions.length, matchedRows: dbg.matchedRows, unmatchedRows: dbg.unmatchedRows};
   }
   return {equipos, programacion, registro};
+}
+
+function parseRegistro_(aoa, equipos){
+  const out = {rows:[], headerRow:-1, hasSub:false, dataStart:-1, mesPositions:[], matchedRows:0, unmatchedRows:0};
+  if(!aoa || aoa.length < 2) return out;
+  const norm = s => String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+  // 1) Localizar fila de encabezados buscando nombres de mes
+  let headerRow = -1;
+  for(let i=0;i<Math.min(15, aoa.length);i++){
+    const row = aoa[i] || [];
+    const hits = MESES.reduce((n,m) => n + (row.some(c => norm(c) === norm(m) || norm(c).startsWith(norm(m)+' ')) ? 1 : 0), 0);
+    if(hits >= 6){ headerRow = i; break; }
+  }
+  if(headerRow < 0) return out;
+  out.headerRow = headerRow;
+  const h = (aoa[headerRow]||[]).map(c => String(c==null?'':c).trim());
+  const sub = (aoa[headerRow+1]||[]).map(c => String(c==null?'':c).trim());
+  // 2) Detectar si la siguiente fila es sub-cabecera de P/R
+  const subHasPR = sub.some(c => /^[PR]$/i.test(c.trim()));
+  out.hasSub = subHasPR;
+  out.dataStart = headerRow + (subHasPR ? 2 : 1);
+  // 3) Para cada mes, encontrar columnas P y R
+  const mp = [];
+  MESES.forEach((m, i) => {
+    const nm = norm(m);
+    // Buscar columna exacta del mes
+    let monthCol = -1;
+    for(let c=0;c<h.length;c++){ if(norm(h[c]) === nm){ monthCol = c; break; } }
+    let pCol = -1, rCol = -1;
+    if(monthCol >= 0){
+      if(subHasPR){
+        for(let cc=monthCol; cc<Math.min(monthCol+4, sub.length); cc++){
+          const s = sub[cc].toUpperCase();
+          if(s === 'P' && pCol < 0) pCol = cc;
+          if(s === 'R' && rCol < 0) rCol = cc;
+        }
+      }
+      if(pCol < 0) pCol = monthCol;
+      if(rCol < 0) rCol = monthCol + 1;
+    } else {
+      // Fallback: buscar headers con sufijo "Enero P" / "Enero R"
+      for(let c=0;c<h.length;c++){
+        const v = norm(h[c]);
+        if(v === nm + ' p' && pCol < 0) pCol = c;
+        if(v === nm + ' r' && rCol < 0) rCol = c;
+      }
+    }
+    if(pCol >= 0 || rCol >= 0) mp.push({mes:i+1, pCol, rCol});
+  });
+  out.mesPositions = mp;
+  if(mp.length === 0) return out;
+  // 4) Localizar columnas de identificación (inv, serie)
+  const idx = {};
+  h.forEach((hh, i) => { idx[norm(hh)] = i; });
+  const invCol = idx['n° inventario'] ?? idx['n inventario'] ?? idx['no inventario'] ?? idx['nº inventario'] ?? idx['inventario'] ?? -1;
+  const serieCol = idx['serie'] ?? idx['n° serie'] ?? idx['nº serie'] ?? idx['n serie'] ?? -1;
+  // 5) Mapas para resolver equipo_id
+  const trim = v => String(v==null?'':v).trim();
+  const invMap = new Map(), serMap = new Map();
+  equipos.forEach(e => {
+    if(e.n_inventario) invMap.set(trim(e.n_inventario), e.id);
+    if(e.serie) serMap.set(trim(e.serie), e.id);
+  });
+  // 6) Leer filas de datos
+  const validRes = ['Si','Sí','C1','C2','C3','C4','C5','C6','C7','C8','FS','Baja','NU'];
+  const norRes = v => {
+    const t = String(v==null?'':v).trim();
+    if(!t) return '';
+    const u = t.toUpperCase();
+    if(u === 'SI' || u === 'SÍ') return 'Si';
+    const m = validRes.find(x => x.toUpperCase() === u);
+    return m || t;
+  };
+  for(let r=out.dataStart; r<aoa.length; r++){
+    const row = aoa[r];
+    if(!row || row.every(v => v==='' || v==null)) continue;
+    const inv = invCol>=0 ? trim(row[invCol]) : '';
+    const ser = serieCol>=0 ? trim(row[serieCol]) : '';
+    if(!inv && !ser) continue;
+    const eid = invMap.get(inv) || serMap.get(ser);
+    if(!eid){ out.unmatchedRows++; continue; }
+    out.matchedRows++;
+    mp.forEach(m => {
+      const p = m.pCol>=0 ? String(row[m.pCol]||'').trim().toUpperCase() : '';
+      const res = m.rCol>=0 ? norRes(row[m.rCol]) : '';
+      if(p || res){
+        out.rows.push({
+          equipo_id: eid,
+          mes: m.mes,
+          programacion: ['X','R','RA','PM'].includes(p) ? p : '',
+          resultado: res,
+          ejecutor: '',
+          updated_at: new Date().toISOString()
+        });
+      }
+    });
+  }
+  return out;
 }
 
 function makeStableId(inv, serie, equipo, fallbackRow){
