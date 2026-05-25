@@ -1,0 +1,1449 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PMP 2026 — Hospital Hernán Henríquez Aravena</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f4f5f7; --border:#e5e7eb; --border-strong:#d1d5db;
+  --text:#111827; --text-muted:#6b7280; --text-soft:#9ca3af;
+  --accent:#2563eb; --accent-hover:#1d4ed8; --accent-soft:#eff6ff;
+  --success:#16a34a; --warn:#d97706; --danger:#dc2626;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04); --shadow:0 4px 12px rgba(0,0,0,.06); --shadow-lg:0 10px 30px rgba(0,0,0,.12);
+  --radius:10px; --radius-sm:6px;
+  --sidebar-w:240px; --header-h:56px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b0d10; --surface:#14171b; --surface-2:#1a1e23; --border:#262b31; --border-strong:#363c43;
+    --text:#e5e7eb; --text-muted:#9ca3af; --text-soft:#6b7280;
+    --accent:#3b82f6; --accent-hover:#60a5fa; --accent-soft:#172033;
+    --shadow:0 4px 12px rgba(0,0,0,.4); --shadow-lg:0 10px 30px rgba(0,0,0,.5);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent);text-decoration:none}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--header-h) 1fr;grid-template-areas:"sidebar header" "sidebar main";height:100vh;transition:grid-template-columns .15s}
+.app.collapsed{--sidebar-w:60px}
+.sidebar{grid-area:sidebar;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.brand{height:var(--header-h);display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap}
+.brand-mark{width:28px;height:28px;border-radius:6px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 28px}
+.brand-text{font-size:13px;letter-spacing:.3px}
+.nav{flex:1;overflow:auto;padding:8px 6px}
+.nav button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;background:none;border:0;border-radius:var(--radius-sm);color:var(--text-muted);text-align:left;margin:1px 0;font-size:13.5px}
+.nav button:hover{background:var(--surface-2);color:var(--text)}
+.nav button.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav .ico{width:18px;height:18px;flex:0 0 18px;display:grid;place-items:center}
+.nav .label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app.collapsed .label,.app.collapsed .brand-text{display:none}
+.header{grid-area:header;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 18px}
+.icon-btn{background:none;border:1px solid var(--border);color:var(--text-muted);width:36px;height:36px;border-radius:var(--radius-sm);display:grid;place-items:center}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.search-wrap{position:relative;flex:1;max-width:520px}
+.search-wrap input{width:100%;height:36px;padding:0 12px 0 36px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-sm);outline:none}
+.search-wrap input:focus{border-color:var(--accent)}
+.search-wrap .ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-soft)}
+.search-dd{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);max-height:380px;overflow:auto;z-index:50;display:none}
+.search-dd.open{display:block}
+.search-dd .it{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border)}
+.search-dd .it:last-child{border-bottom:0}
+.search-dd .it:hover{background:var(--surface-2)}
+.search-dd .it small{color:var(--text-muted);display:block;font-size:11.5px;margin-top:2px}
+.header-spacer{flex:1}
+.main{grid-area:main;overflow:auto;padding:22px 26px}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:20px;font-weight:600;margin:0 0 4px}
+.page-sub{color:var(--text-muted);margin:0 0 18px;font-size:13px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:18px}
+.card h3{margin:0 0 12px;font-size:15px;font-weight:600}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.col{display:flex;flex-direction:column;gap:6px}
+.btn{background:var(--accent);color:#fff;border:0;padding:8px 14px;border-radius:var(--radius-sm);font-weight:500;font-size:13.5px}
+.btn:hover{background:var(--accent-hover)}
+.btn.secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn.secondary:hover{background:var(--surface-2)}
+.btn.ghost{background:transparent;color:var(--text-muted);border:0}
+.btn.ghost:hover{color:var(--text);background:var(--surface-2)}
+.btn.danger{background:var(--danger)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.input,select.input,textarea.input{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;outline:none;width:100%}
+.input:focus{border-color:var(--accent)}
+label.field{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text-muted)}
+label.field .input,label.field select,label.field textarea{font-size:13.5px;color:var(--text)}
+.grid{width:100%;border-collapse:collapse;font-size:13px}
+.grid th,.grid td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:middle}
+.grid th{position:sticky;top:0;background:var(--surface-2);font-weight:600;font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;z-index:2}
+.grid tbody tr:nth-child(even) td{background:rgba(0,0,0,.02)}
+@media (prefers-color-scheme: dark){.grid tbody tr:nth-child(even) td{background:rgba(255,255,255,.02)}}
+.grid tbody tr:hover td{background:var(--accent-soft)}
+.grid .clickable{color:var(--accent);cursor:pointer;text-decoration:none}
+.grid .clickable:hover{text-decoration:underline}
+.grid-scroll{overflow:auto;max-height:calc(100vh - 280px);border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.tag.X{background:#dbeafe;color:#1e40af}
+.tag.R{background:#fef3c7;color:#92400e}
+.tag.RA{background:#fde68a;color:#78350f}
+.tag.PM{background:#dcfce7;color:#166534}
+.tag.Si{background:#dcfce7;color:#166534}
+.tag.FS{background:#fee2e2;color:#991b1b}
+.tag.Baja{background:#e5e7eb;color:#374151}
+.tag.NU{background:#fce7f3;color:#9d174d}
+.tag.C1,.tag.C2,.tag.C3,.tag.C4,.tag.C5,.tag.C6,.tag.C7,.tag.C8{background:#fef3c7;color:#92400e}
+.tag.abierto{background:#dbeafe;color:#1e40af}
+.tag.en_trabajo{background:#fef3c7;color:#92400e}
+.tag.resuelto{background:#dcfce7;color:#166534}
+.tag.ignorado{background:#e5e7eb;color:#374151}
+.tag.operativo{background:#dcfce7;color:#166534}
+.tag.no_operativo{background:#fee2e2;color:#991b1b}
+.tag.disponible{background:#e0e7ff;color:#3730a3}
+@media (prefers-color-scheme: dark){
+  .tag.X{background:#1e3a8a;color:#bfdbfe}
+  .tag.R,.tag.RA{background:#78350f;color:#fde68a}
+  .tag.PM,.tag.Si,.tag.resuelto,.tag.operativo{background:#14532d;color:#bbf7d0}
+  .tag.FS,.tag.no_operativo{background:#7f1d1d;color:#fecaca}
+  .tag.Baja,.tag.ignorado{background:#374151;color:#d1d5db}
+  .tag.NU{background:#831843;color:#fbcfe8}
+  .tag.C1,.tag.C2,.tag.C3,.tag.C4,.tag.C5,.tag.C6,.tag.C7,.tag.C8,.tag.en_trabajo{background:#78350f;color:#fde68a}
+  .tag.abierto{background:#1e3a8a;color:#bfdbfe}
+  .tag.disponible{background:#312e81;color:#c7d2fe}
+}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:min(560px,94vw);max-height:90vh;overflow:auto}
+.modal .mhead{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal .mhead h2{margin:0;font-size:16px}
+.modal .mbody{padding:18px}
+.modal .mfoot{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:60%;max-width:900px;background:var(--surface);box-shadow:var(--shadow-lg);z-index:110;transform:translateX(100%);transition:transform .2s;display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0)}
+.drawer .dhead{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.drawer .dhead h2{margin:0;font-size:16px}
+.drawer .dbody{flex:1;overflow:auto;padding:18px 22px}
+.section{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;background:var(--surface)}
+.section .sechead{padding:12px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:14px}
+.section .secbody{padding:0 16px 16px;display:none}
+.section.open .secbody{display:block}
+.section .sechead .chev{transition:transform .15s}
+.section.open .sechead .chev{transform:rotate(90deg)}
+.kv{display:grid;grid-template-columns:160px 1fr;gap:6px 14px;font-size:13px}
+.kv dt{color:var(--text-muted)}
+.kv dd{margin:0}
+.toasts{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:200}
+.toast{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-sm);padding:10px 14px;box-shadow:var(--shadow);min-width:240px;font-size:13px;animation:slidein .15s}
+.toast.error{border-left-color:var(--danger)}
+.toast.success{border-left-color:var(--success)}
+.toast.warn{border-left-color:var(--warn)}
+@keyframes slidein{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid var(--border-strong);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{padding:40px;text-align:center;color:var(--text-muted)}
+.month-grid th,.month-grid td{text-align:center;min-width:48px}
+.month-grid .col-equipo{text-align:left;min-width:220px;position:sticky;left:0;background:var(--surface);z-index:1}
+.month-grid thead .col-equipo{background:var(--surface-2);z-index:3}
+.month-grid tbody tr:nth-child(even) .col-equipo{background:var(--surface-2)}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.toolbar .input{width:auto;min-width:160px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--surface-2);color:var(--text-muted);font-size:12px}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.danger-text{color:var(--danger)}
+.warn-text{color:var(--warn)}
+.muted{color:var(--text-muted)}
+.right{text-align:right}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.event-list{display:flex;flex-direction:column;gap:10px}
+.event{border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;background:var(--surface-2)}
+.event .ehead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-muted)}
+.event .etype{font-weight:600;color:var(--text)}
+.cell-month{cursor:pointer}
+.cell-month:hover{background:var(--accent-soft) !important}
+.kbd{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--border)}
+.focus-area{outline:none}
+.focus-area:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.tab-bar button{background:none;border:0;padding:9px 14px;color:var(--text-muted);border-bottom:2px solid transparent;font-size:13px}
+.tab-bar button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<div class="app collapsed-no" id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">PMP</div>
+      <div class="brand-text">PMP 2026</div>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-view="inicio" class="active"><span class="ico">🏠</span><span class="label">Inicio</span></button>
+      <button data-view="programacion"><span class="ico">📅</span><span class="label">Programación PMP</span></button>
+      <button data-view="resultados"><span class="ico">📊</span><span class="label">Resultados MP</span></button>
+      <button data-view="plantilla"><span class="ico">📄</span><span class="label">Plantilla mensual</span></button>
+      <button data-view="inventario"><span class="ico">📦</span><span class="label">Inventario</span></button>
+      <button data-view="pendientes"><span class="ico">📌</span><span class="label">Pendientes</span></button>
+      <button data-view="busquedas"><span class="ico">🔎</span><span class="label">Búsquedas</span></button>
+      <button data-view="config"><span class="ico">⚙️</span><span class="label">Configuración</span></button>
+    </nav>
+  </aside>
+  <header class="header">
+    <button class="icon-btn" id="toggleSidebar" title="Colapsar menú">☰</button>
+    <div class="search-wrap">
+      <span class="ico">🔎</span>
+      <input id="globalSearch" placeholder="Buscar por N° Serie o N° Inventario…" autocomplete="off">
+      <div class="search-dd" id="searchDD"></div>
+    </div>
+    <div class="header-spacer"></div>
+    <span class="pill" id="connPill">●  Sin conectar</span>
+    <button class="icon-btn" id="btnRefresh" title="Recargar datos del Sheet">↻</button>
+    <button class="icon-btn" id="btnConfigHdr" title="Configuración">⚙</button>
+  </header>
+  <main class="main" id="main">
+
+    <!-- INICIO -->
+    <section class="page active" data-page="inicio">
+      <h1 class="page-title">Inicio</h1>
+      <p class="page-sub">Gestión del Programa de Mantenciones Preventivas 2026.</p>
+      <div class="card">
+        <h3>Cargar maestro Excel</h3>
+        <p class="muted">Carga el archivo <span class="kbd">ProgramaciónMP_2026.xlsm</span>. Se procesarán solo las hojas <span class="kbd">PMP_2026</span> y <span class="kbd">Registro_MP-2026</span>.</p>
+        <div class="row">
+          <input type="file" id="fileMaster" accept=".xlsm,.xlsx" class="input" style="max-width:380px">
+          <button class="btn" id="btnLoadMaster">Cargar maestro</button>
+          <span id="loadStatus" class="muted"></span>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card"><h3>Equipos</h3><div id="kpiEquipos" style="font-size:28px;font-weight:600">—</div><div class="muted" id="kpiEquiposSub">cargados</div></div>
+        <div class="card"><h3>Pendientes abiertos</h3><div id="kpiPend" style="font-size:28px;font-weight:600">—</div><div class="muted">por revisar</div></div>
+        <div class="card"><h3>MP del mes</h3><div id="kpiMes" style="font-size:28px;font-weight:600">—</div><div class="muted" id="kpiMesSub">programadas</div></div>
+      </div>
+      <div class="card">
+        <h3>Última carga</h3>
+        <div id="lastLoad" class="muted">Sin registro de cargas.</div>
+      </div>
+    </section>
+
+    <!-- PROGRAMACIÓN -->
+    <section class="page" data-page="programacion">
+      <h1 class="page-title">Programación PMP 2026</h1>
+      <p class="page-sub">Vista de solo lectura: equipos × meses con códigos X, R, RA, PM.</p>
+      <div class="toolbar">
+        <input class="input" id="filtProg" placeholder="Filtrar por equipo, servicio, serie…">
+        <select class="input" id="filtProgServ"><option value="">Todos los servicios</option></select>
+      </div>
+      <div class="grid-scroll" id="progScroll"><table class="grid month-grid" id="tblProg"></table></div>
+    </section>
+
+    <!-- RESULTADOS -->
+    <section class="page" data-page="resultados">
+      <h1 class="page-title">Resultados MP 2026</h1>
+      <p class="page-sub">Programación (P) y resultado (R) por mes. Clic en celda muestra el ejecutor.</p>
+      <div class="toolbar">
+        <input class="input" id="filtRes" placeholder="Filtrar por equipo, servicio, serie…">
+      </div>
+      <div class="grid-scroll" id="resScroll"><table class="grid month-grid" id="tblRes"></table></div>
+    </section>
+
+    <!-- PLANTILLA -->
+    <section class="page" data-page="plantilla">
+      <h1 class="page-title">Plantilla mensual</h1>
+      <p class="page-sub">Descarga y carga de plantilla mensual con validación de Responsable.</p>
+      <div class="card">
+        <div class="row">
+          <label class="field" style="min-width:160px">Mes
+            <select class="input" id="selMes"></select>
+          </label>
+          <button class="btn" id="btnDescargarPlant">Descargar plantilla</button>
+          <input type="file" id="filePlantilla" accept=".xlsx" class="input" style="max-width:380px">
+          <button class="btn secondary" id="btnSubirPlant">Subir plantilla completada</button>
+        </div>
+        <div class="divider"></div>
+        <div class="grid-scroll" style="max-height:55vh"><table class="grid" id="tblPlant"></table></div>
+      </div>
+    </section>
+
+    <!-- INVENTARIO -->
+    <section class="page" data-page="inventario">
+      <h1 class="page-title">Inventario</h1>
+      <p class="page-sub">Estado actual de todos los equipos.</p>
+      <div class="toolbar">
+        <input class="input" id="filtInv" placeholder="Buscar…">
+        <select class="input" id="filtInvEstado">
+          <option value="">Todos los estados</option>
+          <option>Operativo</option><option>No operativo</option><option>En servicio técnico</option><option>Baja</option><option>NU</option>
+        </select>
+      </div>
+      <div class="grid-scroll" style="max-height:65vh"><table class="grid" id="tblInv"></table></div>
+    </section>
+
+    <!-- PENDIENTES -->
+    <section class="page" data-page="pendientes">
+      <h1 class="page-title">Pendientes</h1>
+      <p class="page-sub">Pendientes manuales y diferencias detectadas entre cargas.</p>
+      <div class="toolbar">
+        <input class="input" id="filtPend" placeholder="Buscar…">
+        <select class="input" id="filtPendEjec"><option value="">Todos los ejecutores</option></select>
+        <select class="input" id="filtPendEstado">
+          <option value="">Todos los estados</option>
+          <option>abierto</option><option>en_trabajo</option><option>resuelto</option><option>ignorado</option>
+        </select>
+        <select class="input" id="filtPendMes"><option value="">Todos los meses</option></select>
+        <button class="btn" id="btnNuevoPend">Nuevo pendiente</button>
+      </div>
+      <div class="grid-scroll" style="max-height:65vh"><table class="grid" id="tblPend"></table></div>
+    </section>
+
+    <!-- BÚSQUEDAS -->
+    <section class="page" data-page="busquedas">
+      <h1 class="page-title">Búsquedas avanzadas</h1>
+      <p class="page-sub">Consultas predefinidas sobre los datos cargados.</p>
+      <div class="card">
+        <h3>Equipos asignados a ejecutor en mes</h3>
+        <div class="row">
+          <select class="input" id="qEjec" style="max-width:280px"></select>
+          <select class="input" id="qMes" style="max-width:160px"></select>
+          <button class="btn" id="qRun1">Buscar</button>
+        </div>
+        <div class="grid-scroll" style="margin-top:10px;max-height:40vh"><table class="grid" id="tblQ1"></table></div>
+      </div>
+      <div class="card">
+        <h3>Equipos pendientes de ejecutar en mes</h3>
+        <div class="row">
+          <select class="input" id="qMes2" style="max-width:160px"></select>
+          <button class="btn" id="qRun2">Buscar</button>
+        </div>
+        <div class="grid-scroll" style="margin-top:10px;max-height:40vh"><table class="grid" id="tblQ2"></table></div>
+      </div>
+    </section>
+
+    <!-- CONFIG -->
+    <section class="page" data-page="config">
+      <h1 class="page-title">Configuración</h1>
+      <p class="page-sub">Conexión con Google Sheet vía Apps Script.</p>
+      <div class="card">
+        <div class="col">
+          <label class="field">ID del Google Sheet
+            <input class="input" id="cfgSheetId" placeholder="1AbC…XyZ (entre /d/ y /edit en la URL)">
+          </label>
+          <label class="field">URL del Web App de Apps Script
+            <input class="input" id="cfgScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+          </label>
+          <div class="row">
+            <button class="btn" id="btnSaveCfg">Guardar y probar</button>
+            <span id="cfgStatus" class="muted"></span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Estado del backend</h3>
+        <div id="backendInfo" class="muted">—</div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Drawer equipo -->
+<div class="drawer" id="drawer">
+  <div class="dhead">
+    <h2 id="drawerTitle">Equipo</h2>
+    <div class="row">
+      <button class="btn secondary" id="btnNuevoEvento">Nuevo evento</button>
+      <button class="icon-btn" id="closeDrawer">✕</button>
+    </div>
+  </div>
+  <div class="dbody" id="drawerBody"></div>
+</div>
+
+<!-- Overlay general -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <div class="mhead"><h2 id="modalTitle">Diálogo</h2><button class="icon-btn" id="closeModal">✕</button></div>
+    <div class="mbody" id="modalBody"></div>
+    <div class="mfoot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* ============================================================
+   PMP 2026 - Frontend
+   ============================================================ */
+const EJECUTORES = [
+  'Carlos Bahamondes Seguel','Cristián Beltrán Oviedo','Cristina Rozas Urrutia',
+  'Daniel Díaz Neira','Ignacio Berner Bergara','Macarena Toledo','Marco Ulloa',
+  'Matías Soazo Garrido','Personal externo','Ricardo Matus Aroca','Tito Millapán Riquelme'
+];
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MESES_ABR = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const COD_PROG = ['X','R','RA','PM'];
+const COD_RES = ['Si','C1','C2','C3','C4','C5','C6','C7','C8','FS','Baja','NU'];
+const CAUSALES_REPROG = ['C1','C5','C6','C7','C8']; // requieren reprogramación 30 días
+const HOJAS_IGNORADAS = ['Servicio tecnico 2025','Bajas 2026','Bajas 2025','Bajas 2024','Bajas 2023'];
+const COL_IGNORADAS = ['Fam','Observación','Responsable MP'];
+
+const State = {
+  cfg: {sheetId:'', scriptUrl:''},
+  equipos: [],
+  programacion: [],
+  registro: [],
+  eventos: [],
+  pendientes: [],
+  pendientes_tareas: [],
+  pendientes_actualizaciones: [],
+  asignaciones: [],
+  meta: [],
+  loading:false,
+  currentEquipoId:null,
+};
+
+/* -------- localStorage cfg -------- */
+function loadCfg(){
+  try{
+    const raw = localStorage.getItem('pmp2026_cfg');
+    if(raw) State.cfg = JSON.parse(raw);
+  }catch(e){}
+}
+function saveCfg(){
+  localStorage.setItem('pmp2026_cfg', JSON.stringify(State.cfg));
+}
+
+/* -------- Toasts -------- */
+function toast(msg, kind){
+  const t = document.createElement('div');
+  t.className = 'toast ' + (kind||'');
+  t.textContent = msg;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .2s'; setTimeout(()=>t.remove(),250); }, 3800);
+}
+
+/* -------- API Apps Script -------- */
+async function apiGet(action, params){
+  if(!State.cfg.scriptUrl) throw new Error('Web App URL no configurada');
+  const u = new URL(State.cfg.scriptUrl);
+  u.searchParams.set('action', action);
+  if(params) Object.keys(params).forEach(k=>u.searchParams.set(k, params[k]));
+  const r = await fetch(u.toString(), {method:'GET', redirect:'follow'});
+  const text = await r.text();
+  let j; try{ j = JSON.parse(text); }catch(e){ throw new Error('Respuesta inválida del backend: ' + text.slice(0,180)); }
+  if(!j.ok) throw new Error(j.error || 'Error backend');
+  return j;
+}
+async function apiPost(action, payload){
+  if(!State.cfg.scriptUrl) throw new Error('Web App URL no configurada');
+  // Usar text/plain para evitar preflight CORS en Apps Script
+  const r = await fetch(State.cfg.scriptUrl, {
+    method:'POST',
+    redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action, payload})
+  });
+  const text = await r.text();
+  let j; try{ j = JSON.parse(text); }catch(e){ throw new Error('Respuesta inválida del backend: ' + text.slice(0,180)); }
+  if(!j.ok) throw new Error(j.error || 'Error backend');
+  return j;
+}
+
+/* -------- Ping / connection -------- */
+async function pingBackend(){
+  const pill = document.getElementById('connPill');
+  pill.textContent = '● Conectando…';
+  try{
+    const j = await apiGet('ping');
+    pill.style.color = 'var(--success)';
+    pill.textContent = '● Conectado · v' + (j.schema||'');
+    return true;
+  }catch(e){
+    pill.style.color = 'var(--danger)';
+    pill.textContent = '● Sin conexión';
+    return false;
+  }
+}
+
+/* -------- Load all -------- */
+async function loadAll(){
+  if(!State.cfg.sheetId || !State.cfg.scriptUrl){
+    toast('Falta configuración', 'warn');
+    showView('config');
+    return;
+  }
+  State.loading = true;
+  try{
+    const j = await apiGet('getAll');
+    const d = j.data || {};
+    State.equipos = d.equipos || [];
+    State.programacion = d.programacion || [];
+    State.registro = d.registro || [];
+    State.eventos = d.eventos || [];
+    State.pendientes = d.pendientes || [];
+    State.pendientes_tareas = d.pendientes_tareas || [];
+    State.pendientes_actualizaciones = d.pendientes_actualizaciones || [];
+    State.asignaciones = d.asignaciones || [];
+    State.meta = d.meta || [];
+    renderAll();
+    toast('Datos cargados', 'success');
+  }catch(e){
+    toast('Error cargando: ' + e.message, 'error');
+  }finally{ State.loading = false; }
+}
+
+/* -------- Routing -------- */
+function showView(name){
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === name));
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  if(name === 'config'){ document.getElementById('cfgSheetId').value = State.cfg.sheetId||''; document.getElementById('cfgScriptUrl').value = State.cfg.scriptUrl||''; }
+  if(name === 'plantilla') renderPlantilla();
+  if(name === 'inventario') renderInventario();
+  if(name === 'pendientes') renderPendientes();
+  if(name === 'programacion') renderProgramacion();
+  if(name === 'resultados') renderResultados();
+  if(name === 'busquedas') populateSearchSelects();
+  if(name === 'inicio') renderInicio();
+}
+
+/* -------- Render INICIO -------- */
+function renderInicio(){
+  const equipos = State.equipos.filter(e => !truthy(e.es_slot_disponible));
+  document.getElementById('kpiEquipos').textContent = equipos.length;
+  document.getElementById('kpiEquiposSub').textContent = (State.equipos.length - equipos.length) + ' slots disponibles';
+  document.getElementById('kpiPend').textContent = State.pendientes.filter(p => p.estado === 'abierto' || p.estado === 'en_trabajo').length;
+  const mesActual = new Date().getMonth() + 1;
+  const delMes = State.programacion.filter(p => Number(p.mes) === mesActual && p.codigo && ['X','R','RA','PM'].includes(p.codigo));
+  document.getElementById('kpiMes').textContent = delMes.length;
+  document.getElementById('kpiMesSub').textContent = 'en ' + MESES[mesActual-1];
+  const metaCarga = State.meta.find(m => m.clave === 'ultima_carga');
+  document.getElementById('lastLoad').textContent = metaCarga ? ('Última carga: ' + fmtDate(metaCarga.valor)) : 'Sin registro de cargas.';
+}
+
+function fmtDate(s){ if(!s) return ''; try{ const d = new Date(s); return d.toLocaleString('es-CL'); }catch(e){ return String(s); } }
+function truthy(v){ return v === true || v === 'true' || v === 1 || v === '1' || v === 'TRUE'; }
+
+/* -------- Render PROGRAMACIÓN -------- */
+function renderProgramacion(){
+  const filt = (document.getElementById('filtProg').value||'').toLowerCase();
+  const servFilt = document.getElementById('filtProgServ').value;
+  // Poblar select servicios
+  const servs = [...new Set(State.equipos.map(e=>e.servicio).filter(Boolean))].sort();
+  const sel = document.getElementById('filtProgServ');
+  if(sel.options.length <= 1) servs.forEach(s => { const o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
+  const equipos = State.equipos.filter(e => !truthy(e.es_slot_disponible));
+  const progMap = new Map();
+  State.programacion.forEach(p => progMap.set(p.equipo_id+'_'+p.mes, p.codigo));
+  const filtered = equipos.filter(e => {
+    if(servFilt && e.servicio !== servFilt) return false;
+    if(!filt) return true;
+    return (e.equipo||'').toLowerCase().includes(filt) || (e.serie||'').toLowerCase().includes(filt) || (e.n_inventario||'').toLowerCase().includes(filt) || (e.servicio||'').toLowerCase().includes(filt);
+  });
+  let html = '<thead><tr><th class="col-equipo">Equipo</th><th>Serie</th><th>Servicio</th>';
+  for(let m=1;m<=12;m++) html += `<th>${MESES_ABR[m-1]}</th>`;
+  html += '</tr></thead><tbody>';
+  filtered.forEach(e => {
+    html += `<tr><td class="col-equipo"><a class="clickable" data-id="${e.id}">${escapeHtml(e.equipo||'(sin nombre)')}</a><br><small class="muted">${escapeHtml(e.n_inventario||'')}</small></td><td>${escapeHtml(e.serie||'')}</td><td>${escapeHtml(e.servicio||'')}</td>`;
+    for(let m=1;m<=12;m++){
+      const c = progMap.get(e.id+'_'+m);
+      html += `<td>${c ? `<span class="tag ${c}">${c}</span>` : ''}</td>`;
+    }
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  const tbl = document.getElementById('tblProg');
+  tbl.innerHTML = html;
+  tbl.querySelectorAll('a.clickable').forEach(a => a.onclick = ()=> openEquipo(a.dataset.id));
+}
+
+/* -------- Render RESULTADOS -------- */
+function renderResultados(){
+  const filt = (document.getElementById('filtRes').value||'').toLowerCase();
+  const equipos = State.equipos.filter(e => !truthy(e.es_slot_disponible));
+  const regMap = new Map();
+  State.registro.forEach(r => regMap.set(r.equipo_id+'_'+r.mes, r));
+  const filtered = equipos.filter(e => !filt || (e.equipo||'').toLowerCase().includes(filt) || (e.serie||'').toLowerCase().includes(filt) || (e.n_inventario||'').toLowerCase().includes(filt));
+  let html = '<thead><tr><th class="col-equipo" rowspan="2">Equipo</th><th rowspan="2">Servicio</th>';
+  for(let m=1;m<=12;m++) html += `<th colspan="2">${MESES_ABR[m-1]}</th>`;
+  html += '</tr><tr>';
+  for(let m=1;m<=12;m++) html += '<th>P</th><th>R</th>';
+  html += '</tr></thead><tbody>';
+  filtered.forEach(e => {
+    html += `<tr><td class="col-equipo"><a class="clickable" data-id="${e.id}">${escapeHtml(e.equipo||'')}</a><br><small class="muted">${escapeHtml(e.n_inventario||'')}</small></td><td>${escapeHtml(e.servicio||'')}</td>`;
+    for(let m=1;m<=12;m++){
+      const r = regMap.get(e.id+'_'+m) || {};
+      const p = r.programacion || '';
+      const res = r.resultado || '';
+      html += `<td class="cell-month" data-eq="${e.id}" data-mes="${m}">${p?`<span class="tag ${p}">${p}</span>`:''}</td><td class="cell-month" data-eq="${e.id}" data-mes="${m}">${res?`<span class="tag ${res}">${res}</span>`:''}</td>`;
+    }
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  const tbl = document.getElementById('tblRes');
+  tbl.innerHTML = html;
+  tbl.querySelectorAll('a.clickable').forEach(a => a.onclick = ()=> openEquipo(a.dataset.id));
+  tbl.querySelectorAll('.cell-month').forEach(td => td.onclick = ()=>{
+    const eq = td.dataset.eq, mes = td.dataset.mes;
+    const r = State.registro.find(x => x.equipo_id===eq && String(x.mes)===String(mes));
+    const a = State.asignaciones.find(x => x.equipo_id===eq && String(x.mes)===String(mes));
+    const ejec = (r && r.ejecutor) || (a && a.responsable) || '(sin asignar)';
+    toast(`Mes ${MESES[mes-1]}: ${ejec}`, 'success');
+  });
+}
+
+/* -------- Render PLANTILLA -------- */
+function renderPlantilla(){
+  const sel = document.getElementById('selMes');
+  if(sel.options.length === 0){
+    MESES.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i+1; o.textContent=m; sel.appendChild(o); });
+    sel.value = new Date().getMonth()+1;
+  }
+  const mes = Number(sel.value);
+  const equipos = getEquiposPlantilla(mes);
+  let html = '<thead><tr><th>N° Carpeta</th><th>N° Inv.</th><th>Equipo</th><th>Servicio</th><th>Ubicación</th><th>Marca/Modelo</th><th>Serie</th><th>Freq.</th><th>Código</th><th>Última MP</th><th>Responsable</th></tr></thead><tbody>';
+  equipos.forEach(e => {
+    const ultima = ultimaMP(e.id);
+    html += `<tr><td>${escapeHtml(e.n_carpeta||'')}</td><td>${escapeHtml(e.n_inventario||'')}</td><td>${escapeHtml(e.equipo||'')}</td><td>${escapeHtml(e.servicio||'')}</td><td>${escapeHtml(e.ubicacion||'')}</td><td>${escapeHtml((e.marca||'')+' '+(e.modelo||''))}</td><td>${escapeHtml(e.serie||'')}</td><td>${escapeHtml(e.frecuencia_mp||'')}</td><td><span class="tag ${e._codigo}">${e._codigo}</span></td><td>${escapeHtml(ultima)}</td><td>${escapeHtml(e._responsable||'')}</td></tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('tblPlant').innerHTML = html;
+}
+
+function getEquiposPlantilla(mes){
+  const progMap = new Map();
+  State.programacion.forEach(p => progMap.set(p.equipo_id+'_'+p.mes, p.codigo));
+  const regMap = new Map();
+  State.registro.forEach(r => regMap.set(r.equipo_id+'_'+r.mes, r));
+  const asigMap = new Map();
+  State.asignaciones.forEach(a => asigMap.set(a.equipo_id+'_'+a.mes, a.responsable));
+  const out = [];
+  State.equipos.forEach(e => {
+    if(truthy(e.es_slot_disponible)) return;
+    if(e.estado_actual === 'Baja' || e.enu_baja === 'Baja') return;
+    const cod = progMap.get(e.id+'_'+mes);
+    if(!cod || !['X','R','RA','PM'].includes(cod)) return;
+    const r = regMap.get(e.id+'_'+mes);
+    if(r && ['FS','Baja','NU'].includes(r.resultado)) return;
+    out.push({...e, _codigo: cod, _responsable: asigMap.get(e.id+'_'+mes) || e.responsable_actual || 'Sin asignar'});
+  });
+  return out;
+}
+
+function ultimaMP(equipoId){
+  const ev = State.eventos.filter(x => x.equipo_id === equipoId && x.tipo === 'mp')
+    .sort((a,b) => String(b.fecha_evento).localeCompare(String(a.fecha_evento)))[0];
+  if(!ev) return '';
+  let pl = {};
+  try{ pl = typeof ev.payload_json === 'string' ? JSON.parse(ev.payload_json) : (ev.payload_json||{}); }catch(e){}
+  return [ev.fecha_evento, pl.resultado || '', pl.ejecutor || ''].filter(Boolean).join(' · ');
+}
+
+/* -------- Render INVENTARIO -------- */
+function renderInventario(){
+  const filt = (document.getElementById('filtInv').value||'').toLowerCase();
+  const estado = document.getElementById('filtInvEstado').value;
+  const equipos = State.equipos.filter(e => {
+    if(estado && e.estado_actual !== estado) return false;
+    if(!filt) return true;
+    return Object.values(e).some(v => String(v||'').toLowerCase().includes(filt));
+  });
+  let html = '<thead><tr><th>N° Inv.</th><th>Equipo</th><th>Servicio</th><th>Marca/Modelo</th><th>Serie</th><th>Estado</th><th>Responsable</th></tr></thead><tbody>';
+  equipos.forEach(e => {
+    const estTag = e.estado_actual ? `<span class="tag ${e.estado_actual === 'Operativo' ? 'operativo' : (e.estado_actual === 'No operativo' ? 'no_operativo' : (e.estado_actual === 'Baja' ? 'Baja' : (e.estado_actual === 'NU' ? 'NU' : 'abierto')))}">${escapeHtml(e.estado_actual)}</span>` : (truthy(e.es_slot_disponible) ? '<span class="tag disponible">Disponible</span>' : '<span class="muted">—</span>');
+    html += `<tr><td>${escapeHtml(e.n_inventario||'')}</td><td><a class="clickable" data-id="${e.id}">${escapeHtml(e.equipo||'')}</a></td><td>${escapeHtml(e.servicio||'')}</td><td>${escapeHtml((e.marca||'')+' '+(e.modelo||''))}</td><td>${escapeHtml(e.serie||'')}</td><td>${estTag}</td><td>${escapeHtml(e.responsable_actual||'')}</td></tr>`;
+  });
+  html += '</tbody>';
+  const tbl = document.getElementById('tblInv');
+  tbl.innerHTML = html;
+  tbl.querySelectorAll('a.clickable').forEach(a => a.onclick = ()=> openEquipo(a.dataset.id));
+}
+
+/* -------- Render PENDIENTES -------- */
+function renderPendientes(){
+  // Poblar selects
+  const selEjec = document.getElementById('filtPendEjec');
+  if(selEjec.options.length <= 1) EJECUTORES.forEach(e=>{ const o=document.createElement('option'); o.value=e; o.textContent=e; selEjec.appendChild(o); });
+  const selMes = document.getElementById('filtPendMes');
+  if(selMes.options.length <= 1) MESES.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i+1; o.textContent=m; selMes.appendChild(o); });
+  const filt = (document.getElementById('filtPend').value||'').toLowerCase();
+  const ejecF = selEjec.value;
+  const estF = document.getElementById('filtPendEstado').value;
+  const mesF = document.getElementById('filtPendMes').value;
+  const items = State.pendientes.filter(p => {
+    if(ejecF && p.ejecutor_asignado !== ejecF) return false;
+    if(estF && p.estado !== estF) return false;
+    if(mesF){
+      const f = p.fecha_compromiso || p.fecha_creacion;
+      if(!f) return false;
+      const m = (new Date(f)).getMonth()+1;
+      if(String(m) !== mesF) return false;
+    }
+    if(!filt) return true;
+    return Object.values(p).some(v => String(v||'').toLowerCase().includes(filt));
+  });
+  let html = '<thead><tr><th>Origen</th><th>Descripción</th><th>Equipo</th><th>Ejecutor</th><th>Compromiso</th><th>Estado</th><th>Actualizado</th><th></th></tr></thead><tbody>';
+  items.forEach(p => {
+    const eq = State.equipos.find(e => e.id === p.equipo_id);
+    html += `<tr><td><span class="tag ${p.origen==='manual'?'abierto':'en_trabajo'}">${escapeHtml(p.origen||'')}</span></td><td>${escapeHtml(p.descripcion||'')}</td><td>${eq?escapeHtml(eq.equipo||''):'<span class="muted">—</span>'}</td><td>${escapeHtml(p.ejecutor_asignado||'')}</td><td>${escapeHtml(fmtShort(p.fecha_compromiso))}</td><td><span class="tag ${p.estado}">${escapeHtml(p.estado||'')}</span></td><td><small class="muted">${escapeHtml(fmtShort(p.ultima_actualizacion))}</small></td><td><button class="btn ghost" data-pend="${p.id}">Ver</button></td></tr>`;
+  });
+  html += '</tbody>';
+  const tbl = document.getElementById('tblPend');
+  tbl.innerHTML = html;
+  tbl.querySelectorAll('button[data-pend]').forEach(b => b.onclick = ()=> openPendiente(b.dataset.pend));
+}
+function fmtShort(s){ if(!s) return ''; try{ return new Date(s).toLocaleDateString('es-CL'); }catch(e){ return s; } }
+
+/* -------- Render ALL -------- */
+function renderAll(){
+  renderInicio();
+  renderProgramacion();
+  renderResultados();
+  renderPlantilla();
+  renderInventario();
+  renderPendientes();
+  populateSearchSelects();
+}
+
+function populateSearchSelects(){
+  const qe = document.getElementById('qEjec');
+  if(qe.options.length === 0){ qe.innerHTML = ''; EJECUTORES.forEach(e=>{ const o=document.createElement('option'); o.value=e; o.textContent=e; qe.appendChild(o); }); }
+  const qm = document.getElementById('qMes');
+  if(qm.options.length === 0){ MESES.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i+1; o.textContent=m; qm.appendChild(o); }); }
+  const qm2 = document.getElementById('qMes2');
+  if(qm2.options.length === 0){ MESES.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i+1; o.textContent=m; qm2.appendChild(o); }); }
+}
+
+/* -------- Drawer equipo -------- */
+function openEquipo(id){
+  const e = State.equipos.find(x => x.id === id);
+  if(!e){ toast('Equipo no encontrado','error'); return; }
+  State.currentEquipoId = id;
+  document.getElementById('drawerTitle').textContent = e.equipo || '(sin nombre)';
+  document.getElementById('drawer').classList.add('open');
+  renderDrawer();
+}
+function closeEquipo(){ document.getElementById('drawer').classList.remove('open'); State.currentEquipoId = null; }
+
+function renderDrawer(){
+  const e = State.equipos.find(x => x.id === State.currentEquipoId);
+  if(!e) return;
+  const regs = State.registro.filter(r => r.equipo_id === e.id);
+  const progs = State.programacion.filter(p => p.equipo_id === e.id);
+  const evs = State.eventos.filter(v => v.equipo_id === e.id).sort((a,b)=> String(b.fecha_evento).localeCompare(String(a.fecha_evento)));
+  const pends = State.pendientes.filter(p => p.equipo_id === e.id);
+  let html = '';
+
+  // 1 - Datos
+  html += `<div class="section open"><div class="sechead">1. Datos del equipo<span class="chev">▸</span></div><div class="secbody"><dl class="kv">`;
+  const camposVis = [
+    ['ID','id'],['N° Carpeta','n_carpeta'],['N° Inventario','n_inventario'],['Equipo','equipo'],['Servicio','servicio'],['Unidad','unidad'],
+    ['Ubicación','ubicacion'],['Procedencia','procedencia'],['Marca','marca'],['Modelo','modelo'],['Serie','serie'],['Año Instalación','anio_instalacion'],
+    ['Vida Útil Residual','vida_util_residual'],['Clasificación','clasificacion'],['ENU/Baja','enu_baja'],['Frecuencia MP','frecuencia_mp'],
+    ['Estado actual','estado_actual'],['Responsable actual','responsable_actual']
+  ];
+  camposVis.forEach(([k,f])=> html += `<dt>${k}</dt><dd>${escapeHtml(e[f]||'—')}</dd>`);
+  html += '</dl></div></div>';
+
+  // 2 - Registro MP
+  html += `<div class="section"><div class="sechead">2. Registro MP del año<span class="chev">▸</span></div><div class="secbody"><table class="grid"><thead><tr><th>Mes</th><th>Programado</th><th>Resultado</th><th>Ejecutor</th></tr></thead><tbody>`;
+  for(let m=1;m<=12;m++){
+    const r = regs.find(x => Number(x.mes)===m) || {};
+    const p = progs.find(x => Number(x.mes)===m) || {};
+    html += `<tr><td>${MESES[m-1]}</td><td>${(r.programacion||p.codigo)?`<span class="tag ${r.programacion||p.codigo}">${r.programacion||p.codigo}</span>`:''}</td><td>${r.resultado?`<span class="tag ${r.resultado}">${r.resultado}</span>`:''}</td><td>${escapeHtml(r.ejecutor||'')}</td></tr>`;
+  }
+  html += '</tbody></table></div></div>';
+
+  // 3 - Eventos
+  html += `<div class="section"><div class="sechead">3. Vida del equipo (${evs.length} eventos)<span class="chev">▸</span></div><div class="secbody"><div class="event-list">`;
+  if(evs.length === 0) html += '<div class="empty">Sin eventos registrados.</div>';
+  evs.forEach(ev => {
+    let pl = {};
+    try{ pl = typeof ev.payload_json === 'string' ? JSON.parse(ev.payload_json) : (ev.payload_json||{}); }catch(e){}
+    const tnames = {mp:'Mantención preventiva', envio_st:'Envío a servicio técnico', solicitud:'Solicitud de trabajo', recepcion:'Recepción', reparacion:'Reparación'};
+    html += `<div class="event"><div class="ehead"><span class="etype">${tnames[ev.tipo]||ev.tipo}</span><span>${escapeHtml(fmtShort(ev.fecha_evento))}</span></div>`;
+    Object.entries(pl).forEach(([k,v])=>{ if(v) html += `<div><small class="muted">${escapeHtml(k)}:</small> ${escapeHtml(String(v))}</div>`; });
+    html += '</div>';
+  });
+  html += '</div></div></div>';
+
+  // 4 - Pendientes
+  html += `<div class="section"><div class="sechead">4. Pendientes asociados (${pends.length})<span class="chev">▸</span></div><div class="secbody">`;
+  if(pends.length === 0) html += '<div class="empty">Sin pendientes.</div>';
+  pends.forEach(p => {
+    html += `<div class="event"><div class="ehead"><span class="etype">${escapeHtml(p.descripcion||'')}</span><span class="tag ${p.estado}">${p.estado}</span></div><div class="muted">${escapeHtml(p.ejecutor_asignado||'')} · compromiso ${escapeHtml(fmtShort(p.fecha_compromiso))} · actualizado ${escapeHtml(fmtShort(p.ultima_actualizacion))}</div></div>`;
+  });
+  html += '</div></div>';
+
+  document.getElementById('drawerBody').innerHTML = html;
+  document.querySelectorAll('#drawerBody .sechead').forEach(h => h.onclick = ()=> h.parentElement.classList.toggle('open'));
+}
+
+/* -------- Eventos: modal de creación -------- */
+function openNewEventoModal(){
+  if(!State.currentEquipoId){ toast('Abre primero un equipo','warn'); return; }
+  showModal('Nuevo evento', `
+    <label class="field">Tipo
+      <select class="input" id="evTipo">
+        <option value="mp">Mantención preventiva</option>
+        <option value="envio_st">Envío a servicio técnico</option>
+        <option value="solicitud">Solicitud de trabajo</option>
+        <option value="recepcion">Recepción</option>
+        <option value="reparacion">Reparación</option>
+      </select>
+    </label>
+    <div id="evFormCnt" style="margin-top:12px"></div>
+  `, [
+    {label:'Cancelar', kind:'secondary', onClick: closeModal},
+    {label:'Guardar', kind:'primary', onClick: saveEvento}
+  ]);
+  document.getElementById('evTipo').onchange = renderEvForm;
+  renderEvForm();
+}
+function renderEvForm(){
+  const t = document.getElementById('evTipo').value;
+  const ejecOptions = EJECUTORES.map(e=>`<option>${escapeHtml(e)}</option>`).join('');
+  const meses = MESES.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+  const today = new Date().toISOString().slice(0,10);
+  let html = '';
+  if(t==='mp'){
+    html = `
+      <div class="grid-2">
+        <label class="field">Fecha <input class="input" type="date" id="ev_fecha" value="${today}"></label>
+        <label class="field">Mes asociado <select class="input" id="ev_mes">${meses}</select></label>
+      </div>
+      <div class="grid-2">
+        <label class="field">Resultado
+          <select class="input" id="ev_resultado">${COD_RES.map(c=>`<option>${c}</option>`).join('')}</select>
+        </label>
+        <label class="field">Ejecutor <select class="input" id="ev_ejecutor">${ejecOptions}</select></label>
+      </div>
+      <label class="field">Observaciones <textarea class="input" id="ev_obs" rows="2"></textarea></label>
+      <label class="field">Estado del equipo al finalizar
+        <select class="input" id="ev_estado"><option value="operativo">Operativo</option><option value="no_operativo">No operativo</option></select>
+      </label>
+    `;
+  } else if(t==='envio_st'){
+    html = `
+      <div class="grid-2">
+        <label class="field">Fecha envío <input class="input" type="date" id="ev_fecha" value="${today}"></label>
+        <label class="field">N° de envío <input class="input" id="ev_nenvio"></label>
+      </div>
+      <label class="field">Empresa receptora <input class="input" id="ev_empresa"></label>
+      <div class="grid-2">
+        <label class="field">Ejecutor que gestiona <select class="input" id="ev_ejecutor">${ejecOptions}</select></label>
+        <label class="field">Folio de solicitud <input class="input" id="ev_folio"></label>
+      </div>
+      <label class="field">Estado en servicio técnico <input class="input" id="ev_estado_st" placeholder="recibido / en taller / etc."></label>
+      <label class="field">Comentario <textarea class="input" id="ev_comentario" rows="2"></textarea></label>
+    `;
+  } else if(t==='solicitud'){
+    html = `
+      <div class="grid-2">
+        <label class="field">Fecha <input class="input" type="date" id="ev_fecha" value="${today}"></label>
+        <label class="field">Folio <input class="input" id="ev_folio"></label>
+      </div>
+      <label class="field">Ejecutor asignado <select class="input" id="ev_ejecutor">${ejecOptions}</select></label>
+      <label class="field">Comentario <textarea class="input" id="ev_comentario" rows="2"></textarea></label>
+      <input type="hidden" id="ev_estado" value="no_operativo">
+    `;
+  } else if(t==='recepcion'){
+    html = `
+      <div class="grid-2">
+        <label class="field">Fecha <input class="input" type="date" id="ev_fecha" value="${today}"></label>
+        <label class="field">N° envío al que corresponde <input class="input" id="ev_nenvio"></label>
+      </div>
+      <label class="field">Folio guía de despacho <input class="input" id="ev_folio"></label>
+      <label class="field">Estado al recibir
+        <select class="input" id="ev_estado"><option value="operativo">Operativo</option><option value="no_operativo">No operativo</option></select>
+      </label>
+    `;
+  } else if(t==='reparacion'){
+    html = `
+      <label class="field">Fecha <input class="input" type="date" id="ev_fecha" value="${today}"></label>
+      <label class="field">Estado al finalizar
+        <select class="input" id="ev_estado"><option value="operativo">Operativo</option><option value="no_operativo">No operativo</option></select>
+      </label>
+    `;
+  }
+  document.getElementById('evFormCnt').innerHTML = html;
+}
+async function saveEvento(){
+  const tipo = document.getElementById('evTipo').value;
+  const fecha = document.getElementById('ev_fecha').value;
+  if(!fecha){ toast('Falta fecha','warn'); return; }
+  let payload = {};
+  if(tipo==='mp'){
+    payload = {
+      mes: Number(document.getElementById('ev_mes').value),
+      resultado: document.getElementById('ev_resultado').value,
+      ejecutor: document.getElementById('ev_ejecutor').value,
+      observaciones: document.getElementById('ev_obs').value,
+      estado_equipo: document.getElementById('ev_estado').value
+    };
+  } else if(tipo==='envio_st'){
+    payload = {
+      n_envio: document.getElementById('ev_nenvio').value,
+      empresa: document.getElementById('ev_empresa').value,
+      ejecutor: document.getElementById('ev_ejecutor').value,
+      folio: document.getElementById('ev_folio').value,
+      estado_st: document.getElementById('ev_estado_st').value,
+      comentario: document.getElementById('ev_comentario').value
+    };
+  } else if(tipo==='solicitud'){
+    payload = {
+      ejecutor: document.getElementById('ev_ejecutor').value,
+      folio: document.getElementById('ev_folio').value,
+      comentario: document.getElementById('ev_comentario').value,
+      estado: 'no_operativo'
+    };
+  } else if(tipo==='recepcion'){
+    payload = {
+      n_envio: document.getElementById('ev_nenvio').value,
+      folio_guia: document.getElementById('ev_folio').value,
+      estado: document.getElementById('ev_estado').value
+    };
+  } else if(tipo==='reparacion'){
+    payload = { estado: document.getElementById('ev_estado').value };
+  }
+  try{
+    const row = {equipo_id: State.currentEquipoId, tipo, fecha_evento: fecha, payload_json: JSON.stringify(payload)};
+    await apiPost('addEvento', {row});
+    toast('Evento guardado','success');
+    closeModal();
+    await loadAll();
+    openEquipo(State.currentEquipoId);
+    // Aviso reprogramación
+    if(tipo==='mp' && CAUSALES_REPROG.includes(payload.resultado)){
+      const eqProg = State.programacion.filter(p => p.equipo_id === State.currentEquipoId && Number(p.mes) > payload.mes);
+      const fechaMP = new Date(fecha);
+      const tieneR = eqProg.some(p => {
+        if(p.codigo !== 'R') return false;
+        const fechaR = new Date(2026, Number(p.mes)-1, 1);
+        const diff = (fechaR - fechaMP) / (1000*60*60*24);
+        return diff >= 0 && diff <= 30;
+      });
+      if(!tieneR) toast(`⚠ Causal ${payload.resultado} requiere reprogramación dentro de 30 días`,'warn');
+    } else if(tipo==='mp' && ['C2','C3','C4'].includes(payload.resultado)){
+      toast(`Causal ${payload.resultado}: no requiere reprogramación`,'success');
+    }
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+/* -------- Modal helpers -------- */
+function showModal(title, bodyHTML, buttons){
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHTML;
+  const foot = document.getElementById('modalFoot');
+  foot.innerHTML = '';
+  (buttons||[]).forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'btn ' + (b.kind === 'primary' ? '' : (b.kind === 'danger' ? 'danger' : 'secondary'));
+    btn.textContent = b.label;
+    btn.onclick = b.onClick;
+    foot.appendChild(btn);
+  });
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+
+/* -------- Pendientes: nuevo y abrir -------- */
+function openNuevoPendiente(){
+  const equipoOptions = ['<option value="">(sin equipo)</option>'].concat(State.equipos.filter(e=>!truthy(e.es_slot_disponible)).map(e=>`<option value="${e.id}">${escapeHtml(e.equipo||'')} - ${escapeHtml(e.n_inventario||'')}</option>`)).join('');
+  const ejecOptions = ['<option value="">(sin asignar)</option>'].concat(EJECUTORES.map(e=>`<option>${escapeHtml(e)}</option>`)).join('');
+  showModal('Nuevo pendiente', `
+    <label class="field">Descripción <textarea class="input" id="pe_desc" rows="2"></textarea></label>
+    <div class="grid-2">
+      <label class="field">Equipo <select class="input" id="pe_eq">${equipoOptions}</select></label>
+      <label class="field">Ejecutor <select class="input" id="pe_ejec">${ejecOptions}</select></label>
+    </div>
+    <label class="field">Fecha compromiso <input class="input" type="date" id="pe_fc"></label>
+  `, [
+    {label:'Cancelar', kind:'secondary', onClick: closeModal},
+    {label:'Crear', kind:'primary', onClick: async ()=>{
+      const desc = document.getElementById('pe_desc').value.trim();
+      if(!desc){ toast('Falta descripción','warn'); return; }
+      try{
+        await apiPost('addPendiente', {row:{
+          equipo_id: document.getElementById('pe_eq').value,
+          descripcion: desc,
+          ejecutor_asignado: document.getElementById('pe_ejec').value,
+          fecha_compromiso: document.getElementById('pe_fc').value,
+          origen: 'manual'
+        }});
+        toast('Pendiente creado','success');
+        closeModal();
+        await loadAll();
+      }catch(e){ toast('Error: '+e.message,'error'); }
+    }}
+  ]);
+}
+function openPendiente(id){
+  const p = State.pendientes.find(x => x.id === id);
+  if(!p) return;
+  const tareas = State.pendientes_tareas.filter(t => t.pendiente_id === id);
+  const acts = State.pendientes_actualizaciones.filter(a => a.pendiente_id === id).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+  const eq = State.equipos.find(e => e.id === p.equipo_id);
+  const ejecOptions = ['<option value="">(sin asignar)</option>'].concat(EJECUTORES.map(e=>`<option ${e===p.ejecutor_asignado?'selected':''}>${escapeHtml(e)}</option>`)).join('');
+  const estados = ['abierto','en_trabajo','resuelto','ignorado'].map(s=>`<option ${s===p.estado?'selected':''}>${s}</option>`).join('');
+  showModal('Pendiente', `
+    <div class="muted" style="margin-bottom:10px">${eq?escapeHtml(eq.equipo):'(sin equipo)'} · creado ${escapeHtml(fmtShort(p.fecha_creacion))}</div>
+    <label class="field">Descripción <textarea class="input" id="pe_desc" rows="2">${escapeHtml(p.descripcion||'')}</textarea></label>
+    <div class="grid-2">
+      <label class="field">Ejecutor <select class="input" id="pe_ejec">${ejecOptions}</select></label>
+      <label class="field">Estado <select class="input" id="pe_estado">${estados}</select></label>
+    </div>
+    <label class="field">Fecha compromiso <input class="input" type="date" id="pe_fc" value="${(p.fecha_compromiso||'').slice(0,10)}"></label>
+    <div class="divider"></div>
+    <h3 style="font-size:13px;margin:0 0 8px">Tareas (${tareas.length})</h3>
+    <div id="pe_tareas">${tareas.map(t=>`<div class="event"><div>${escapeHtml(t.descripcion||'')} <span class="tag ${t.estado||'abierto'}">${t.estado||'abierto'}</span></div></div>`).join('') || '<div class="muted">—</div>'}</div>
+    <div class="row" style="margin-top:8px"><input class="input" id="pe_nueva_tarea" placeholder="Nueva tarea"><button class="btn secondary" id="pe_add_tarea">Agregar</button></div>
+    <div class="divider"></div>
+    <h3 style="font-size:13px;margin:0 0 8px">Actualizaciones</h3>
+    <div>${acts.map(a=>`<div class="event"><div class="ehead"><span>${escapeHtml(fmtShort(a.fecha))}</span></div>${escapeHtml(a.texto||'')}</div>`).join('') || '<div class="muted">—</div>'}</div>
+    <div class="row" style="margin-top:8px">
+      <input class="input" type="date" id="pe_act_fecha" value="${new Date().toISOString().slice(0,10)}" style="max-width:160px">
+      <input class="input" id="pe_act_txt" placeholder="Texto de actualización">
+      <button class="btn secondary" id="pe_add_act">Agregar</button>
+    </div>
+  `, [
+    {label:'Cerrar', kind:'secondary', onClick: closeModal},
+    {label:'Guardar', kind:'primary', onClick: async ()=>{
+      try{
+        await apiPost('updatePendiente', {row:{
+          id: p.id,
+          equipo_id: p.equipo_id,
+          origen: p.origen,
+          descripcion: document.getElementById('pe_desc').value,
+          ejecutor_asignado: document.getElementById('pe_ejec').value,
+          fecha_creacion: p.fecha_creacion,
+          fecha_compromiso: document.getElementById('pe_fc').value,
+          estado: document.getElementById('pe_estado').value
+        }});
+        toast('Pendiente actualizado','success');
+        closeModal();
+        await loadAll();
+      }catch(e){ toast('Error: '+e.message,'error'); }
+    }}
+  ]);
+  document.getElementById('pe_add_tarea').onclick = async ()=>{
+    const d = document.getElementById('pe_nueva_tarea').value.trim();
+    if(!d) return;
+    try{
+      await apiPost('addTareaPendiente', {row:{pendiente_id:p.id, descripcion:d, estado:'abierto'}});
+      toast('Tarea agregada','success');
+      closeModal();
+      await loadAll();
+      openPendiente(p.id);
+    }catch(e){ toast('Error: '+e.message,'error'); }
+  };
+  document.getElementById('pe_add_act').onclick = async ()=>{
+    const d = document.getElementById('pe_act_txt').value.trim();
+    const f = document.getElementById('pe_act_fecha').value;
+    if(!d){ toast('Falta texto','warn'); return; }
+    try{
+      await apiPost('addActualizacionPendiente', {row:{pendiente_id:p.id, fecha:f, texto:d}});
+      toast('Actualización agregada','success');
+      closeModal();
+      await loadAll();
+      openPendiente(p.id);
+    }catch(e){ toast('Error: '+e.message,'error'); }
+  };
+}
+
+/* -------- Búsqueda global -------- */
+function setupGlobalSearch(){
+  const inp = document.getElementById('globalSearch');
+  const dd = document.getElementById('searchDD');
+  inp.addEventListener('input', ()=>{
+    const q = inp.value.trim().toLowerCase();
+    if(!q){ dd.classList.remove('open'); dd.innerHTML=''; return; }
+    const matches = State.equipos.filter(e => (e.serie||'').toLowerCase().includes(q) || (e.n_inventario||'').toLowerCase().includes(q)).slice(0,20);
+    if(!matches.length){ dd.innerHTML = '<div class="it muted">Sin resultados</div>'; dd.classList.add('open'); return; }
+    dd.innerHTML = matches.map(e => `<div class="it" data-id="${e.id}">${escapeHtml(e.equipo||'(sin nombre)')}<small>Inv: ${escapeHtml(e.n_inventario||'')} · Serie: ${escapeHtml(e.serie||'')} · ${escapeHtml(e.servicio||'')}</small></div>`).join('');
+    dd.classList.add('open');
+    dd.querySelectorAll('.it[data-id]').forEach(it => it.onclick = ()=>{ openEquipo(it.dataset.id); dd.classList.remove('open'); inp.value=''; });
+  });
+  document.addEventListener('click', e => { if(!inp.contains(e.target) && !dd.contains(e.target)) dd.classList.remove('open'); });
+}
+
+/* -------- Carga XLSM -------- */
+async function handleLoadMaster(){
+  const file = document.getElementById('fileMaster').files[0];
+  if(!file){ toast('Selecciona un archivo','warn'); return; }
+  const status = document.getElementById('loadStatus');
+  status.innerHTML = '<span class="loader"></span> Procesando…';
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array', cellDates:false});
+    if(!wb.Sheets['PMP_2026'] && !wb.Sheets['Registro_MP-2026']) throw new Error('No se encuentran las hojas PMP_2026 ni Registro_MP-2026');
+    const parsed = parseMaster(wb);
+    status.textContent = `Parseado: ${parsed.equipos.length} equipos, ${parsed.programacion.length} celdas prog, ${parsed.registro.length} celdas registro.`;
+    // Detectar diferencias contra State actual
+    const diffs = computeDiffs(parsed);
+    // Subir al Sheet
+    status.innerHTML = '<span class="loader"></span> Guardando equipos…';
+    await apiPost('saveEquipos', {rows: parsed.equipos});
+    status.innerHTML = '<span class="loader"></span> Guardando programación…';
+    await apiPost('saveProgramacion', {rows: parsed.programacion});
+    status.innerHTML = '<span class="loader"></span> Guardando registro…';
+    await apiPost('saveRegistro', {rows: parsed.registro});
+    if(diffs.length){
+      status.innerHTML = '<span class="loader"></span> Creando ' + diffs.length + ' pendientes por diferencias…';
+      await apiPost('applyDiff', {diffs});
+    }
+    await apiPost('setMeta', {clave:'ultima_carga', valor: new Date().toISOString()});
+    status.textContent = `Listo. ${parsed.equipos.length} equipos. ${diffs.length} diferencias generaron pendientes.`;
+    toast(`Carga completa. ${diffs.length} diferencias detectadas.`, diffs.length ? 'warn' : 'success');
+    await loadAll();
+  }catch(e){
+    status.innerHTML = '<span class="danger-text">' + escapeHtml(e.message) + '</span>';
+    toast('Error: '+e.message,'error');
+  }
+}
+
+function parseMaster(wb){
+  const equipos = [], programacion = [], registro = [];
+  const shPMP = wb.Sheets['PMP_2026'];
+  const shReg = wb.Sheets['Registro_MP-2026'];
+  if(shPMP){
+    const aoa = XLSX.utils.sheet_to_json(shPMP, {header:1, defval:'', raw:true});
+    if(aoa.length < 8) throw new Error('PMP_2026: faltan filas (esperado encabezados en fila 7)');
+    const headers = aoa[6].map(h => String(h||'').trim());
+    // Mapear columnas
+    const idxMap = {};
+    headers.forEach((h,i)=> idxMap[h.toLowerCase()] = i);
+    const colByName = (names) => { for(const n of names){ const i = idxMap[n.toLowerCase()]; if(i!=null) return i; } return -1; };
+    const C = {
+      id: colByName(['ID','Id','id']),
+      n_carpeta: colByName(['N° Carpeta','Nº Carpeta','N Carpeta','Carpeta']),
+      n_inventario: colByName(['N° Inventario','Nº Inventario','N Inventario','Inventario']),
+      equipo: colByName(['Equipo']),
+      servicio: colByName(['Servicio']),
+      unidad: colByName(['Unidad']),
+      ubicacion: colByName(['Ubicación','Ubicacion']),
+      procedencia: colByName(['Procedencia']),
+      marca: colByName(['Marca']),
+      modelo: colByName(['Modelo']),
+      serie: colByName(['Serie','N° Serie','Nº Serie']),
+      anio_instalacion: colByName(['Año Instalación','Anio Instalacion','Año instalacion']),
+      vida_util_residual: colByName(['Vida Útil Residual','Vida Util Residual']),
+      clasificacion: colByName(['Clasificación','Clasificacion']),
+      enu_baja: colByName(['ENU/Baja','ENU','Baja']),
+      frecuencia_mp: colByName(['Frecuencia MP','Frecuencia'])
+    };
+    // Columnas de mes
+    const mesCols = [];
+    MESES.forEach((m,i)=>{
+      const ci = colByName([m]);
+      if(ci >= 0) mesCols.push({mes:i+1, col:ci});
+    });
+    for(let r=7;r<aoa.length;r++){
+      const row = aoa[r];
+      if(!row || row.every(v => v==='' || v==null)) continue;
+      // Skip filas con encabezados/notas (sin equipo y sin serie)
+      const equipoVal = String(row[C.equipo]||'').trim();
+      const serieVal = String(row[C.serie]||'').trim();
+      const invVal = String(row[C.n_inventario]||'').trim();
+      if(!equipoVal && !serieVal && !invVal) continue;
+      const vu = String(row[C.vida_util_residual]||'').trim();
+      const esSlot = vu.toLowerCase() === 'disponible' || (!equipoVal && !serieVal);
+      // Generar ID estable
+      let id = C.id>=0 ? String(row[C.id]||'').trim() : '';
+      if(!id) id = makeStableId(invVal, serieVal, equipoVal, r);
+      const eq = {
+        id,
+        n_carpeta: C.n_carpeta>=0 ? String(row[C.n_carpeta]||'').trim() : '',
+        n_inventario: invVal,
+        equipo: equipoVal || (esSlot ? 'Slot disponible' : 'Sin asignar'),
+        servicio: C.servicio>=0 ? String(row[C.servicio]||'').trim() : '',
+        unidad: C.unidad>=0 ? String(row[C.unidad]||'').trim() : '',
+        ubicacion: C.ubicacion>=0 ? String(row[C.ubicacion]||'').trim() : '',
+        procedencia: C.procedencia>=0 ? String(row[C.procedencia]||'').trim() : '',
+        marca: C.marca>=0 ? String(row[C.marca]||'').trim() : '',
+        modelo: C.modelo>=0 ? String(row[C.modelo]||'').trim() : '',
+        serie: serieVal,
+        anio_instalacion: C.anio_instalacion>=0 ? String(row[C.anio_instalacion]||'').trim() : '',
+        vida_util_residual: vu,
+        clasificacion: C.clasificacion>=0 ? String(row[C.clasificacion]||'').trim() : '',
+        enu_baja: C.enu_baja>=0 ? String(row[C.enu_baja]||'').trim() : '',
+        frecuencia_mp: C.frecuencia_mp>=0 ? String(row[C.frecuencia_mp]||'').trim() : '',
+        es_slot_disponible: esSlot ? 'TRUE' : '',
+        estado_actual: '',
+        responsable_actual: ''
+      };
+      equipos.push(eq);
+      mesCols.forEach(mc => {
+        const v = String(row[mc.col]||'').trim().toUpperCase();
+        if(['X','R','RA','PM'].includes(v)){
+          programacion.push({equipo_id:id, mes:mc.mes, codigo:v, updated_at:new Date().toISOString()});
+        }
+      });
+    }
+  }
+  if(shReg){
+    const aoa = XLSX.utils.sheet_to_json(shReg, {header:1, defval:'', raw:true});
+    if(aoa.length >= 8){
+      const h7 = aoa[6].map(h => String(h||'').trim());
+      // Encontrar columnas de mes (cabecera fila 7) y sub-cabeceras P/R (fila 8 quizás)
+      // Estrategia: para cada mes, buscar su columna; las dos siguientes son P y R
+      const subHeaders = aoa[7] || [];
+      const mesPositions = [];
+      MESES.forEach((m,i)=>{
+        for(let c=0;c<h7.length;c++){
+          if(h7[c].toLowerCase() === m.toLowerCase()){
+            // buscar P y R en filas h7 o subHeaders
+            let pCol = -1, rCol = -1;
+            for(let cc=c; cc<c+4 && cc<h7.length; cc++){
+              const sh1 = String(h7[cc]||'').trim().toUpperCase();
+              const sh2 = String(subHeaders[cc]||'').trim().toUpperCase();
+              if(sh1==='P' || sh2==='P') pCol = cc;
+              if(sh1==='R' || sh2==='R') rCol = cc;
+            }
+            if(pCol < 0) pCol = c;
+            if(rCol < 0) rCol = c+1;
+            mesPositions.push({mes:i+1, pCol, rCol});
+            break;
+          }
+        }
+      });
+      // Mapear inventario→id ya existente en equipos
+      const invToId = new Map();
+      const serieToId = new Map();
+      equipos.forEach(e => { if(e.n_inventario) invToId.set(e.n_inventario, e.id); if(e.serie) serieToId.set(e.serie, e.id); });
+      // Buscar columnas de identificación
+      const idxMap = {};
+      h7.forEach((h,i)=> idxMap[h.toLowerCase()] = i);
+      const invCol = idxMap['n° inventario'] ?? idxMap['nº inventario'] ?? idxMap['inventario'] ?? -1;
+      const serieCol = idxMap['serie'] ?? idxMap['n° serie'] ?? idxMap['nº serie'] ?? -1;
+      for(let r=8;r<aoa.length;r++){
+        const row = aoa[r];
+        if(!row || row.every(v => v==='' || v==null)) continue;
+        const inv = invCol>=0 ? String(row[invCol]||'').trim() : '';
+        const ser = serieCol>=0 ? String(row[serieCol]||'').trim() : '';
+        let eqId = invToId.get(inv) || serieToId.get(ser);
+        if(!eqId) continue;
+        mesPositions.forEach(mp => {
+          const p = String(row[mp.pCol]||'').trim().toUpperCase();
+          const res = String(row[mp.rCol]||'').trim();
+          if(p || res){
+            registro.push({
+              equipo_id: eqId,
+              mes: mp.mes,
+              programacion: ['X','R','RA','PM'].includes(p) ? p : '',
+              resultado: res || '',
+              ejecutor: '',
+              updated_at: new Date().toISOString()
+            });
+          }
+        });
+      }
+    }
+  }
+  return {equipos, programacion, registro};
+}
+
+function makeStableId(inv, serie, equipo, fallbackRow){
+  const base = (inv || serie || equipo || ('row_'+fallbackRow)).toString().replace(/\s+/g,'_').toLowerCase();
+  // hash simple
+  let h = 0; for(let i=0;i<base.length;i++){ h = ((h<<5)-h + base.charCodeAt(i)) | 0; }
+  return 'eq_' + (h>>>0).toString(36) + '_' + base.slice(0,12);
+}
+
+function computeDiffs(parsed){
+  const diffs = [];
+  const oldEq = new Map(State.equipos.map(e => [e.id, e]));
+  const newEq = new Map(parsed.equipos.map(e => [e.id, e]));
+  // Equipos nuevos
+  parsed.equipos.forEach(e => { if(!oldEq.has(e.id)) diffs.push({equipo_id:e.id, descripcion:`Equipo nuevo detectado: ${e.equipo} (${e.n_inventario||e.serie||''})`}); });
+  // Equipos eliminados
+  State.equipos.forEach(e => { if(!newEq.has(e.id)) diffs.push({equipo_id:e.id, descripcion:`Equipo ya no aparece en el maestro: ${e.equipo}`}); });
+  // Programación distinta
+  const oldProg = new Map(State.programacion.map(p => [p.equipo_id+'_'+p.mes, p.codigo]));
+  parsed.programacion.forEach(p => {
+    const k = p.equipo_id+'_'+p.mes;
+    const old = oldProg.get(k);
+    if(old !== undefined && old !== p.codigo){
+      const eq = newEq.get(p.equipo_id);
+      diffs.push({equipo_id:p.equipo_id, descripcion:`Cambio de programación: ${eq?eq.equipo:p.equipo_id} en ${MESES[p.mes-1]}: ${old} → ${p.codigo}`});
+    }
+  });
+  // Programaciones eliminadas
+  State.programacion.forEach(p => {
+    const k = p.equipo_id+'_'+p.mes;
+    if(!parsed.programacion.some(np => np.equipo_id+'_'+np.mes === k)){
+      const eq = newEq.get(p.equipo_id) || oldEq.get(p.equipo_id);
+      diffs.push({equipo_id:p.equipo_id, descripcion:`Programación retirada: ${eq?eq.equipo:p.equipo_id} en ${MESES[p.mes-1]} (era ${p.codigo})`});
+    }
+  });
+  return diffs;
+}
+
+/* -------- Plantilla descarga (XLSX con dataValidation) -------- */
+async function descargarPlantilla(){
+  const mes = Number(document.getElementById('selMes').value);
+  const equipos = getEquiposPlantilla(mes);
+  if(equipos.length === 0){ toast('No hay equipos para este mes','warn'); return; }
+  const headers = ['N° Carpeta','N° Inventario','Equipo','Servicio','Unidad','Ubicación','Marca','Modelo','Serie','Año','Frecuencia MP','Programado en mes','Última mantención preventiva','Responsable','equipo_id (no editar)','mes (no editar)'];
+  const rows = equipos.map(e => [
+    e.n_carpeta||'', e.n_inventario||'', e.equipo||'', e.servicio||'', e.unidad||'',
+    e.ubicacion||'', e.marca||'', e.modelo||'', e.serie||'', e.anio_instalacion||'',
+    e.frecuencia_mp||'', e._codigo, ultimaMP(e.id), e._responsable||'',
+    e.id, mes
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  // ancho columnas
+  ws['!cols'] = [{wch:12},{wch:14},{wch:32},{wch:18},{wch:16},{wch:22},{wch:14},{wch:18},{wch:18},{wch:8},{wch:14},{wch:12},{wch:36},{wch:28},{wch:24},{wch:6}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
+  // Generar xlsx en memoria
+  const xlsxBuf = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  // Inyectar dataValidation con JSZip
+  const zip = await JSZip.loadAsync(xlsxBuf);
+  const sheetPath = 'xl/worksheets/sheet1.xml';
+  let sheetXml = await zip.file(sheetPath).async('string');
+  const last = rows.length + 1; // fila final (1-indexed incluye header)
+  const ejecCsv = EJECUTORES.join(',');
+  const dv = `<dataValidations count="1"><dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" errorTitle="Responsable inválido" error="Seleccione un valor de la lista" promptTitle="Responsable" prompt="Seleccione el ejecutor" sqref="N2:N${last}"><formula1>"${ejecCsv}"</formula1></dataValidation></dataValidations>`;
+  // Insertar antes de </worksheet> y después de </sheetData>
+  if(sheetXml.includes('</sheetData>')){
+    sheetXml = sheetXml.replace('</sheetData>', '</sheetData>' + dv);
+  } else {
+    sheetXml = sheetXml.replace('</worksheet>', dv + '</worksheet>');
+  }
+  zip.file(sheetPath, sheetXml);
+  const blob = await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `Plantilla_${MESES[mes-1]}_2026.xlsx`; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('Plantilla descargada','success');
+}
+
+/* -------- Subir plantilla -------- */
+async function subirPlantilla(){
+  const file = document.getElementById('filePlantilla').files[0];
+  if(!file){ toast('Selecciona un archivo','warn'); return; }
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+    if(aoa.length < 2) throw new Error('Plantilla vacía');
+    const headers = aoa[0].map(h=>String(h||'').trim());
+    const idxResp = headers.indexOf('Responsable');
+    const idxEq = headers.findIndex(h=>h.toLowerCase().startsWith('equipo_id'));
+    const idxMes = headers.findIndex(h=>h.toLowerCase().startsWith('mes'));
+    if(idxResp<0 || idxEq<0 || idxMes<0) throw new Error('Plantilla con columnas inesperadas. Descarga una plantilla nueva.');
+    const rows = [];
+    for(let i=1;i<aoa.length;i++){
+      const r = aoa[i];
+      const resp = String(r[idxResp]||'').trim();
+      const eq = String(r[idxEq]||'').trim();
+      const mes = Number(r[idxMes]);
+      if(!eq || !mes) continue;
+      if(resp && !EJECUTORES.includes(resp)){ toast(`Responsable inválido en fila ${i+1}: "${resp}"`,'warn'); continue; }
+      rows.push({equipo_id:eq, mes, responsable: resp, updated_at:new Date().toISOString()});
+    }
+    if(!rows.length){ toast('No hay asignaciones para guardar','warn'); return; }
+    await apiPost('saveAsignaciones', {rows});
+    toast(`${rows.length} asignaciones guardadas`,'success');
+    await loadAll();
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+/* -------- Búsquedas avanzadas -------- */
+function busquedaEjecutorMes(){
+  const ejec = document.getElementById('qEjec').value;
+  const mes = Number(document.getElementById('qMes').value);
+  const ids = new Set(State.asignaciones.filter(a => a.responsable === ejec && Number(a.mes)===mes).map(a => a.equipo_id));
+  State.registro.filter(r => r.ejecutor === ejec && Number(r.mes)===mes).forEach(r => ids.add(r.equipo_id));
+  const eqs = State.equipos.filter(e => ids.has(e.id));
+  renderTablaSimple('tblQ1', eqs);
+}
+function busquedaPendientesMes(){
+  const mes = Number(document.getElementById('qMes2').value);
+  // Equipos con código en ese mes pero sin resultado (ni ejecutado)
+  const progKeys = new Set(State.programacion.filter(p => Number(p.mes)===mes && ['X','R','RA','PM'].includes(p.codigo)).map(p => p.equipo_id));
+  const realizadas = new Set(State.registro.filter(r => Number(r.mes)===mes && r.resultado).map(r => r.equipo_id));
+  const pend = [...progKeys].filter(id => !realizadas.has(id));
+  const eqs = State.equipos.filter(e => pend.includes(e.id));
+  renderTablaSimple('tblQ2', eqs);
+}
+function renderTablaSimple(tblId, eqs){
+  let html = '<thead><tr><th>N° Inv.</th><th>Equipo</th><th>Servicio</th><th>Serie</th><th>Estado</th></tr></thead><tbody>';
+  if(eqs.length === 0) html += '<tr><td colspan="5" class="empty">Sin resultados</td></tr>';
+  eqs.forEach(e => html += `<tr><td>${escapeHtml(e.n_inventario||'')}</td><td><a class="clickable" data-id="${e.id}">${escapeHtml(e.equipo||'')}</a></td><td>${escapeHtml(e.servicio||'')}</td><td>${escapeHtml(e.serie||'')}</td><td>${escapeHtml(e.estado_actual||'')}</td></tr>`);
+  html += '</tbody>';
+  const tbl = document.getElementById(tblId);
+  tbl.innerHTML = html;
+  tbl.querySelectorAll('a.clickable').forEach(a => a.onclick = ()=> openEquipo(a.dataset.id));
+}
+
+/* -------- Helpers -------- */
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* -------- Init -------- */
+function setupEvents(){
+  document.getElementById('toggleSidebar').onclick = ()=> document.getElementById('app').classList.toggle('collapsed');
+  document.querySelectorAll('#nav button').forEach(b => b.onclick = ()=> showView(b.dataset.view));
+  document.getElementById('btnConfigHdr').onclick = ()=> showView('config');
+  document.getElementById('btnRefresh').onclick = loadAll;
+  document.getElementById('btnSaveCfg').onclick = async ()=>{
+    State.cfg.sheetId = document.getElementById('cfgSheetId').value.trim();
+    State.cfg.scriptUrl = document.getElementById('cfgScriptUrl').value.trim();
+    if(!State.cfg.sheetId || !State.cfg.scriptUrl){ toast('Completa ambos campos','warn'); return; }
+    saveCfg();
+    const status = document.getElementById('cfgStatus');
+    status.innerHTML = '<span class="loader"></span> Probando…';
+    const ok = await pingBackend();
+    if(ok){
+      status.innerHTML = '<span style="color:var(--success)">✓ Conectado</span>';
+      document.getElementById('backendInfo').textContent = 'Conexión OK. Cargando datos…';
+      try{ await loadAll(); document.getElementById('backendInfo').textContent = 'Backend operativo. ' + State.equipos.length + ' equipos en el Sheet.'; showView('inicio'); }
+      catch(e){ document.getElementById('backendInfo').innerHTML = '<span class="warn-text">Conectado, pero error al leer: '+escapeHtml(e.message)+'. Asegúrate de haber ejecutado setup() en Apps Script.</span>'; }
+    } else {
+      status.innerHTML = '<span class="danger-text">✗ No se pudo conectar. Revisa la URL.</span>';
+    }
+  };
+  document.getElementById('closeDrawer').onclick = closeEquipo;
+  document.getElementById('closeModal').onclick = closeModal;
+  document.getElementById('overlay').addEventListener('click', e => { if(e.target.id === 'overlay') closeModal(); });
+  document.getElementById('btnLoadMaster').onclick = handleLoadMaster;
+  document.getElementById('btnNuevoEvento').onclick = openNewEventoModal;
+  document.getElementById('btnNuevoPend').onclick = openNuevoPendiente;
+  document.getElementById('btnDescargarPlant').onclick = descargarPlantilla;
+  document.getElementById('btnSubirPlant').onclick = subirPlantilla;
+  document.getElementById('selMes').onchange = renderPlantilla;
+  document.getElementById('filtProg').oninput = renderProgramacion;
+  document.getElementById('filtProgServ').onchange = renderProgramacion;
+  document.getElementById('filtRes').oninput = renderResultados;
+  document.getElementById('filtInv').oninput = renderInventario;
+  document.getElementById('filtInvEstado').onchange = renderInventario;
+  document.getElementById('filtPend').oninput = renderPendientes;
+  document.getElementById('filtPendEjec').onchange = renderPendientes;
+  document.getElementById('filtPendEstado').onchange = renderPendientes;
+  document.getElementById('filtPendMes').onchange = renderPendientes;
+  document.getElementById('qRun1').onclick = busquedaEjecutorMes;
+  document.getElementById('qRun2').onclick = busquedaPendientesMes;
+  setupGlobalSearch();
+  document.addEventListener('keydown', e => { if(e.key === 'Escape'){ closeModal(); closeEquipo(); } });
+}
+
+async function init(){
+  loadCfg();
+  setupEvents();
+  populateSearchSelects();
+  if(!State.cfg.sheetId || !State.cfg.scriptUrl){
+    showView('config');
+    toast('Falta configuración: pega el ID del Sheet y la URL del Web App','warn');
+    return;
+  }
+  const ok = await pingBackend();
+  if(ok){ await loadAll(); }
+  else { showView('config'); toast('No se pudo conectar al backend','error'); }
+}
+
+init();
+</script>
+</body>
+</html>
