@@ -1241,7 +1241,17 @@ async function handleLoadMaster(){
     const dbg = State._registroDebug || {};
     status.textContent = `Parseado: ${parsed.equipos.length} equipos, ${parsed.programacion.length} celdas programación, ${parsed.registro.length} celdas registro.` + (dbg.headerRow ? ` Registro: cab fila ${dbg.headerRow}, ${dbg.hasSub?'con':'sin'} sub P/R, datos desde fila ${dbg.dataStart}, ${dbg.matchedRows||0} matched, ${dbg.unmatchedRows||0} sin equipo.` : '');
     if(parsed.programacion.length === 0 && parsed.equipos.length > 0) toast('Atención: 0 celdas de programación. Revisa los nombres de columnas de mes en PMP_2026.','warn');
-    if(parsed.registro.length === 0 && parsed.equipos.length > 0) toast('Atención: 0 celdas de registro. Revisa hoja Registro_MP-2026.', 'warn');
+    if(parsed.registro.length === 0 && parsed.equipos.length > 0){
+      let msg = 'Atención: 0 celdas de registro.';
+      if(dbg.headerRow && dbg.matchedRows === 0 && dbg.unmatchedRows > 0){
+        msg += ` ${dbg.unmatchedRows} filas sin equipo en PMP_2026.`;
+        if(dbg.sampleUnmatched && dbg.sampleUnmatched.length) msg += ' Ej: ' + dbg.sampleUnmatched.slice(0,3).join(', ');
+      } else if(!dbg.headerRow){
+        msg += ' No se localizó la fila de encabezados en Registro_MP-2026.';
+      }
+      toast(msg, 'warn');
+      console.warn('parseRegistro debug:', dbg);
+    }
     // Detectar diferencias contra State actual
     const diffs = computeDiffs(parsed);
     // Subir al Sheet
@@ -1374,7 +1384,7 @@ function parseMaster(wb){
     const aoa = XLSX.utils.sheet_to_json(shReg, {header:1, defval:'', raw:true});
     const dbg = parseRegistro_(aoa, equipos);
     dbg.rows.forEach(r => registro.push(r));
-    State._registroDebug = {headerRow: dbg.headerRow+1, hasSub: dbg.hasSub, dataStart: dbg.dataStart+1, mesPositions: dbg.mesPositions.length, matchedRows: dbg.matchedRows, unmatchedRows: dbg.unmatchedRows};
+    State._registroDebug = {headerRow: dbg.headerRow+1, hasSub: dbg.hasSub, dataStart: dbg.dataStart+1, mesPositions: dbg.mesPositions.length, matchedRows: dbg.matchedRows, unmatchedRows: dbg.unmatchedRows, sampleUnmatched: dbg.sampleUnmatched||[]};
   }
   return {equipos, programacion, registro};
 }
@@ -1428,18 +1438,26 @@ function parseRegistro_(aoa, equipos){
   });
   out.mesPositions = mp;
   if(mp.length === 0) return out;
-  // 4) Localizar columnas de identificación (inv, serie)
+  // 4) Localizar columnas de identificación (inv, serie, equipo)
   const idx = {};
   h.forEach((hh, i) => { idx[norm(hh)] = i; });
-  const invCol = idx['n° inventario'] ?? idx['n inventario'] ?? idx['no inventario'] ?? idx['nº inventario'] ?? idx['inventario'] ?? -1;
-  const serieCol = idx['serie'] ?? idx['n° serie'] ?? idx['nº serie'] ?? idx['n serie'] ?? -1;
-  // 5) Mapas para resolver equipo_id
+  let invCol = idx['n° inventario'] ?? idx['n inventario'] ?? idx['no inventario'] ?? idx['nº inventario'] ?? idx['inventario'] ?? -1;
+  let serieCol = idx['serie'] ?? idx['n° serie'] ?? idx['nº serie'] ?? idx['n serie'] ?? -1;
+  let eqNameCol = idx['equipo'] ?? -1;
+  // Fallback por "contains"
+  if(invCol < 0) for(const k of Object.keys(idx)){ if(k.includes('inventario')){ invCol = idx[k]; break; } }
+  if(serieCol < 0) for(const k of Object.keys(idx)){ if(k.includes('serie')){ serieCol = idx[k]; break; } }
+  // 5) Mapas para resolver equipo_id (raw + canonical: solo alfanumérico minúsculas)
   const trim = v => String(v==null?'':v).trim();
-  const invMap = new Map(), serMap = new Map();
+  const canon = v => String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
+  const invMap = new Map(), serMap = new Map(), eqNameMap = new Map();
+  const invCMap = new Map(), serCMap = new Map();
   equipos.forEach(e => {
-    if(e.n_inventario) invMap.set(trim(e.n_inventario), e.id);
-    if(e.serie) serMap.set(trim(e.serie), e.id);
+    if(e.n_inventario){ invMap.set(trim(e.n_inventario), e.id); const c = canon(e.n_inventario); if(c) invCMap.set(c, e.id); }
+    if(e.serie){ serMap.set(trim(e.serie), e.id); const c = canon(e.serie); if(c) serCMap.set(c, e.id); }
+    if(e.equipo) eqNameMap.set(canon(e.equipo)+'|'+canon(e.serie||''), e.id);
   });
+  const sampleUnmatched = [];
   // 6) Leer filas de datos
   const validRes = ['Si','Sí','C1','C2','C3','C4','C5','C6','C7','C8','FS','Baja','NU'];
   const norRes = v => {
@@ -1455,9 +1473,21 @@ function parseRegistro_(aoa, equipos){
     if(!row || row.every(v => v==='' || v==null)) continue;
     const inv = invCol>=0 ? trim(row[invCol]) : '';
     const ser = serieCol>=0 ? trim(row[serieCol]) : '';
-    if(!inv && !ser) continue;
-    const eid = invMap.get(inv) || serMap.get(ser);
-    if(!eid){ out.unmatchedRows++; continue; }
+    const eqName = eqNameCol>=0 ? trim(row[eqNameCol]) : '';
+    if(!inv && !ser && !eqName) continue;
+    let eid = invMap.get(inv) || serMap.get(ser);
+    if(!eid){ // intento canónico (sin guiones/espacios)
+      const ci = canon(inv), cs = canon(ser);
+      eid = (ci && invCMap.get(ci)) || (cs && serCMap.get(cs));
+    }
+    if(!eid && eqName){ // último recurso: equipo+serie
+      eid = eqNameMap.get(canon(eqName)+'|'+canon(ser));
+    }
+    if(!eid){
+      out.unmatchedRows++;
+      if(sampleUnmatched.length < 5) sampleUnmatched.push(`inv="${inv}" serie="${ser}"`);
+      continue;
+    }
     out.matchedRows++;
     mp.forEach(m => {
       const p = m.pCol>=0 ? String(row[m.pCol]||'').trim().toUpperCase() : '';
@@ -1474,6 +1504,7 @@ function parseRegistro_(aoa, equipos){
       }
     });
   }
+  out.sampleUnmatched = sampleUnmatched;
   return out;
 }
 
