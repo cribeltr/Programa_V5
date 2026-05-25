@@ -385,6 +385,7 @@ label.field .input,label.field select,label.field textarea{font-size:13.5px;colo
     <h2 id="drawerTitle">Equipo</h2>
     <div class="row">
       <button class="btn secondary" id="btnNuevoEvento">Nuevo evento</button>
+      <button class="btn secondary" id="btnNuevoPendDrawer">Nuevo pendiente</button>
       <button class="icon-btn" id="closeDrawer">✕</button>
     </div>
   </div>
@@ -1097,8 +1098,9 @@ function showModal(title, bodyHTML, buttons){
 function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
 
 /* -------- Pendientes: nuevo y abrir -------- */
-function openNuevoPendiente(){
-  const equipoOptions = ['<option value="">(sin equipo)</option>'].concat(State.equipos.filter(e=>!truthy(e.es_slot_disponible)).map(e=>`<option value="${e.id}">${escapeHtml(e.equipo||'')} - ${escapeHtml(e.n_inventario||'')}</option>`)).join('');
+function openNuevoPendiente(preselectEquipoId){
+  const sel = preselectEquipoId ? String(preselectEquipoId) : '';
+  const equipoOptions = ['<option value="">(sin equipo)</option>'].concat(State.equipos.filter(e=>!truthy(e.es_slot_disponible)).map(e=>`<option value="${escapeHtml(e.id)}"${String(e.id)===sel?' selected':''}>${escapeHtml(e.equipo||'')} - ${escapeHtml(e.n_inventario||'')}</option>`)).join('');
   const ejecOptions = ['<option value="">(sin asignar)</option>'].concat(EJECUTORES.map(e=>`<option>${escapeHtml(e)}</option>`)).join('');
   showModal('Nuevo pendiente', `
     <label class="field">Descripción <textarea class="input" id="pe_desc" rows="2"></textarea></label>
@@ -1662,7 +1664,11 @@ function setupEvents(){
   document.getElementById('overlay').addEventListener('click', e => { if(e.target.id === 'overlay') closeModal(); });
   document.getElementById('btnLoadMaster').onclick = handleLoadMaster;
   document.getElementById('btnNuevoEvento').onclick = openNewEventoModal;
-  document.getElementById('btnNuevoPend').onclick = openNuevoPendiente;
+  document.getElementById('btnNuevoPend').onclick = ()=> openNuevoPendiente();
+  document.getElementById('btnNuevoPendDrawer').onclick = ()=>{
+    if(!State.currentEquipoId){ toast('Abre primero un equipo','warn'); return; }
+    openNuevoPendiente(State.currentEquipoId);
+  };
   document.getElementById('btnDescargarPlant').onclick = descargarPlantilla;
   document.getElementById('btnSubirPlant').onclick = subirPlantilla;
   document.getElementById('selMes').onchange = renderPlantilla;
