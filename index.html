@@ -310,8 +310,21 @@ label.field .input,label.field select,label.field textarea{font-size:13.5px;colo
           <option value="">Todos los estados</option>
           <option>abierto</option><option>en_trabajo</option><option>resuelto</option><option>ignorado</option>
         </select>
+        <select class="input" id="filtPendOrigen">
+          <option value="">Todos los orígenes</option>
+          <option value="manual">Manual</option>
+          <option value="diff_carga">Diferencias de carga</option>
+        </select>
         <select class="input" id="filtPendMes"><option value="">Todos los meses</option></select>
         <button class="btn" id="btnNuevoPend">Nuevo pendiente</button>
+      </div>
+      <div class="toolbar" id="bulkBar" style="display:none;background:var(--accent-soft);padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--accent)">
+        <span id="bulkCount" style="font-weight:600;color:var(--accent)">0 seleccionados</span>
+        <select class="input" id="bulkEjec" style="max-width:240px"><option value="">(asignar ejecutor…)</option></select>
+        <button class="btn" id="btnBulkResuelto">Marcar resuelto</button>
+        <button class="btn secondary" id="btnBulkTrabajo">Marcar en trabajo</button>
+        <button class="btn secondary" id="btnBulkIgnorado">Ignorar</button>
+        <button class="btn ghost" id="btnBulkClear">Limpiar selección</button>
       </div>
       <div class="grid-scroll" style="max-height:65vh"><table class="grid" id="tblPend"></table></div>
     </section>
@@ -733,19 +746,24 @@ function renderInventario(){
 }
 
 /* -------- Render PENDIENTES -------- */
+const BulkSel = new Set();
 function renderPendientes(){
   // Poblar selects
   const selEjec = document.getElementById('filtPendEjec');
   if(selEjec.options.length <= 1) EJECUTORES.forEach(e=>{ const o=document.createElement('option'); o.value=e; o.textContent=e; selEjec.appendChild(o); });
   const selMes = document.getElementById('filtPendMes');
   if(selMes.options.length <= 1) MESES.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i+1; o.textContent=m; selMes.appendChild(o); });
+  const bulkE = document.getElementById('bulkEjec');
+  if(bulkE.options.length <= 1) EJECUTORES.forEach(e=>{ const o=document.createElement('option'); o.value=e; o.textContent=e; bulkE.appendChild(o); });
   const filt = (document.getElementById('filtPend').value||'').toLowerCase();
   const ejecF = selEjec.value;
   const estF = document.getElementById('filtPendEstado').value;
+  const origF = document.getElementById('filtPendOrigen').value;
   const mesF = document.getElementById('filtPendMes').value;
   const items = State.pendientes.filter(p => {
     if(ejecF && p.ejecutor_asignado !== ejecF) return false;
     if(estF && p.estado !== estF) return false;
+    if(origF && p.origen !== origF) return false;
     if(mesF){
       const f = p.fecha_compromiso || p.fecha_creacion;
       if(!f) return false;
@@ -755,15 +773,56 @@ function renderPendientes(){
     if(!filt) return true;
     return Object.values(p).some(v => String(v||'').toLowerCase().includes(filt));
   });
-  let html = '<thead><tr><th>Origen</th><th>Descripción</th><th>Equipo</th><th>Ejecutor</th><th>Compromiso</th><th>Estado</th><th>Actualizado</th><th></th></tr></thead><tbody>';
+  // Limpiar selección de IDs ya filtrados fuera
+  const visibleIds = new Set(items.map(p => p.id));
+  [...BulkSel].forEach(id => { if(!visibleIds.has(id)) BulkSel.delete(id); });
+  const allChecked = items.length > 0 && items.every(p => BulkSel.has(p.id));
+  let html = `<thead><tr><th style="width:36px"><input type="checkbox" id="chkAll" ${allChecked?'checked':''}></th><th>Origen</th><th>Descripción</th><th>Equipo</th><th>Ejecutor</th><th>Compromiso</th><th>Estado</th><th>Actualizado</th><th></th></tr></thead><tbody>`;
   items.forEach(p => {
     const eq = State.equipos.find(e => e.id === p.equipo_id);
-    html += `<tr><td><span class="tag ${p.origen==='manual'?'abierto':'en_trabajo'}">${escapeHtml(p.origen||'')}</span></td><td>${escapeHtml(p.descripcion||'')}</td><td>${eq?escapeHtml(eq.equipo||''):'<span class="muted">—</span>'}</td><td>${escapeHtml(p.ejecutor_asignado||'')}</td><td>${escapeHtml(fmtShort(p.fecha_compromiso))}</td><td><span class="tag ${p.estado}">${escapeHtml(p.estado||'')}</span></td><td><small class="muted">${escapeHtml(fmtShort(p.ultima_actualizacion))}</small></td><td><button class="btn ghost" data-pend="${p.id}">Ver</button></td></tr>`;
+    const checked = BulkSel.has(p.id) ? 'checked' : '';
+    html += `<tr${BulkSel.has(p.id)?' style="background:var(--accent-soft)"':''}><td><input type="checkbox" class="rowChk" data-id="${p.id}" ${checked}></td><td><span class="tag ${p.origen==='manual'?'abierto':'en_trabajo'}">${escapeHtml(p.origen||'')}</span></td><td>${escapeHtml(p.descripcion||'')}</td><td>${eq?escapeHtml(eq.equipo||''):'<span class="muted">—</span>'}</td><td>${escapeHtml(p.ejecutor_asignado||'')}</td><td>${escapeHtml(fmtShort(p.fecha_compromiso))}</td><td><span class="tag ${p.estado}">${escapeHtml(p.estado||'')}</span></td><td><small class="muted">${escapeHtml(fmtShort(p.ultima_actualizacion))}</small></td><td><button class="btn ghost" data-pend="${p.id}">Ver</button></td></tr>`;
   });
+  if(items.length === 0) html += '<tr><td colspan="9" class="empty">Sin pendientes con esos filtros</td></tr>';
   html += '</tbody>';
   const tbl = document.getElementById('tblPend');
   tbl.innerHTML = html;
   tbl.querySelectorAll('button[data-pend]').forEach(b => b.onclick = ()=> openPendiente(b.dataset.pend));
+  tbl.querySelectorAll('.rowChk').forEach(c => c.onchange = (ev)=>{
+    ev.stopPropagation();
+    if(c.checked) BulkSel.add(c.dataset.id); else BulkSel.delete(c.dataset.id);
+    updateBulkBar();
+    // marcar visualmente la fila sin re-render completo
+    c.closest('tr').style.background = c.checked ? 'var(--accent-soft)' : '';
+  });
+  const chkAll = document.getElementById('chkAll');
+  if(chkAll) chkAll.onchange = ()=>{
+    if(chkAll.checked) items.forEach(p => BulkSel.add(p.id));
+    else items.forEach(p => BulkSel.delete(p.id));
+    renderPendientes();
+  };
+  updateBulkBar();
+}
+function updateBulkBar(){
+  const n = BulkSel.size;
+  const bar = document.getElementById('bulkBar');
+  if(!bar) return;
+  bar.style.display = n > 0 ? 'flex' : 'none';
+  document.getElementById('bulkCount').textContent = n + (n === 1 ? ' seleccionado' : ' seleccionados');
+}
+async function bulkUpdate(estado){
+  if(BulkSel.size === 0) return;
+  const ejecutor = document.getElementById('bulkEjec').value;
+  const ids = [...BulkSel];
+  if(!confirm(`¿Aplicar "${estado}" a ${ids.length} pendiente${ids.length===1?'':'s'}?` + (ejecutor ? ` Ejecutor: ${ejecutor}` : ''))) return;
+  try{
+    const payload = {ids, estado};
+    if(ejecutor) payload.ejecutor = ejecutor;
+    const r = await apiPost('bulkUpdatePendientes', payload);
+    toast(`${r.count||ids.length} pendientes actualizados`, 'success');
+    BulkSel.clear();
+    await loadAll();
+  }catch(e){ toast('Error: '+e.message,'error'); }
 }
 function fmtShort(s){ if(!s) return ''; try{ return new Date(s).toLocaleDateString('es-CL'); }catch(e){ return s; } }
 
@@ -1515,7 +1574,12 @@ function setupEvents(){
   document.getElementById('filtPend').oninput = renderPendientes;
   document.getElementById('filtPendEjec').onchange = renderPendientes;
   document.getElementById('filtPendEstado').onchange = renderPendientes;
+  document.getElementById('filtPendOrigen').onchange = renderPendientes;
   document.getElementById('filtPendMes').onchange = renderPendientes;
+  document.getElementById('btnBulkResuelto').onclick = ()=> bulkUpdate('resuelto');
+  document.getElementById('btnBulkTrabajo').onclick = ()=> bulkUpdate('en_trabajo');
+  document.getElementById('btnBulkIgnorado').onclick = ()=> bulkUpdate('ignorado');
+  document.getElementById('btnBulkClear').onclick = ()=>{ BulkSel.clear(); renderPendientes(); };
   document.getElementById('qRun1').onclick = busquedaEjecutorMes;
   document.getElementById('qRun2').onclick = busquedaPendientesMes;
   document.getElementById('btnTheme').onclick = cycleTheme;

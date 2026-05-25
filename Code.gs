@@ -170,6 +170,35 @@ function doPost(e) {
         upsertByKey_('pendientes', [row], ['id']);
         return json_({ok:true});
       }
+      case 'bulkUpdatePendientes': {
+        const ids = payload.ids || [];
+        const estado = payload.estado || '';
+        const ejecutor = payload.ejecutor;
+        if (!ids.length || !estado) return json_({ok:false, error:'Faltan ids o estado'});
+        const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('pendientes');
+        const headers = SHEETS.pendientes;
+        const last = sh.getLastRow();
+        if (last < 2) return json_({ok:true, count:0});
+        const range = sh.getRange(2, 1, last - 1, headers.length);
+        const values = range.getValues();
+        const idCol = headers.indexOf('id');
+        const estCol = headers.indexOf('estado');
+        const upCol = headers.indexOf('ultima_actualizacion');
+        const ejCol = headers.indexOf('ejecutor_asignado');
+        const idSet = new Set(ids.map(String));
+        let count = 0;
+        const now = new Date().toISOString();
+        values.forEach(r => {
+          if (idSet.has(String(r[idCol]))) {
+            r[estCol] = estado;
+            r[upCol] = now;
+            if (ejecutor !== undefined && ejecutor !== null && ejecutor !== '') r[ejCol] = ejecutor;
+            count++;
+          }
+        });
+        range.setValues(values);
+        return json_({ok:true, count});
+      }
       case 'addTareaPendiente': {
         const row = payload.row || {};
         row.id = row.id || Utilities.getUuid();
