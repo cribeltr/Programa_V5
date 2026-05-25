@@ -1237,8 +1237,9 @@ async function handleLoadMaster(){
     if(!wb.Sheets['PMP_2026'] && !wb.Sheets['Registro_MP-2026']) throw new Error('No se encuentran las hojas PMP_2026 ni Registro_MP-2026');
     const parsed = parseMaster(wb);
     const dbg = State._registroDebug || {};
-    status.textContent = `Parseado: ${parsed.equipos.length} equipos, ${parsed.programacion.length} celdas prog, ${parsed.registro.length} celdas registro` + (dbg.headerRow ? ` (cab fila ${dbg.headerRow}, ${dbg.hasSub?'con':'sin'} sub P/R, datos desde fila ${dbg.dataStart}, ${dbg.matchedRows||0} filas matched, ${dbg.unmatchedRows||0} no encontradas)` : '') + '.';
-    if(parsed.registro.length === 0 && parsed.equipos.length > 0) toast('Atención: 0 celdas de registro parseadas. Revisa hoja "Registro_MP-2026".', 'warn');
+    status.textContent = `Parseado: ${parsed.equipos.length} equipos, ${parsed.programacion.length} celdas programación, ${parsed.registro.length} celdas registro.` + (dbg.headerRow ? ` Registro: cab fila ${dbg.headerRow}, ${dbg.hasSub?'con':'sin'} sub P/R, datos desde fila ${dbg.dataStart}, ${dbg.matchedRows||0} matched, ${dbg.unmatchedRows||0} sin equipo.` : '');
+    if(parsed.programacion.length === 0 && parsed.equipos.length > 0) toast('Atención: 0 celdas de programación. Revisa los nombres de columnas de mes en PMP_2026.','warn');
+    if(parsed.registro.length === 0 && parsed.equipos.length > 0) toast('Atención: 0 celdas de registro. Revisa hoja Registro_MP-2026.', 'warn');
     // Detectar diferencias contra State actual
     const diffs = computeDiffs(parsed);
     // Subir al Sheet
@@ -1269,11 +1270,29 @@ function parseMaster(wb){
   if(shPMP){
     const aoa = XLSX.utils.sheet_to_json(shPMP, {header:1, defval:'', raw:true});
     if(aoa.length < 8) throw new Error('PMP_2026: faltan filas (esperado encabezados en fila 7)');
-    const headers = aoa[6].map(h => String(h||'').trim());
-    // Mapear columnas
+    // Detectar fila de cabeceras (puede no estar exactamente en fila 7 si el archivo varía)
+    const normH = s => String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+    let hdrRow = 6;
+    const looksLikeHeader = row => {
+      const r = (row||[]).map(normH);
+      return r.includes('equipo') && (r.includes('serie') || r.some(c=>c.includes('inventario'))) ;
+    };
+    if(!looksLikeHeader(aoa[6])){
+      for(let i=0;i<Math.min(15, aoa.length);i++){ if(looksLikeHeader(aoa[i])){ hdrRow = i; break; } }
+    }
+    const headers = (aoa[hdrRow]||[]).map(h => String(h==null?'':h).trim());
+    // Mapear columnas (tolerante a tildes/mayúsculas/sufijos)
     const idxMap = {};
-    headers.forEach((h,i)=> idxMap[h.toLowerCase()] = i);
-    const colByName = (names) => { for(const n of names){ const i = idxMap[n.toLowerCase()]; if(i!=null) return i; } return -1; };
+    headers.forEach((h,i)=>{ idxMap[normH(h)] = i; });
+    const colByName = (names) => {
+      for(const n of names){ const i = idxMap[normH(n)]; if(i!=null) return i; }
+      // Fallback: busca el primer header que CONTENGA cualquiera de los nombres
+      for(const n of names){
+        const nn = normH(n);
+        for(const k of Object.keys(idxMap)){ if(k.includes(nn)) return idxMap[k]; }
+      }
+      return -1;
+    };
     const C = {
       id: colByName(['ID','Id','id']),
       n_carpeta: colByName(['N° Carpeta','Nº Carpeta','N Carpeta','Carpeta']),
@@ -1292,13 +1311,21 @@ function parseMaster(wb){
       enu_baja: colByName(['ENU/Baja','ENU','Baja']),
       frecuencia_mp: colByName(['Frecuencia MP','Frecuencia'])
     };
-    // Columnas de mes
+    // Columnas de mes (match exacto, abreviado o que empiece con el nombre)
     const mesCols = [];
+    const MESES_NORM = MESES.map(normH);
+    const MESES_ABR_NORM = MESES_ABR.map(normH);
     MESES.forEach((m,i)=>{
-      const ci = colByName([m]);
-      if(ci >= 0) mesCols.push({mes:i+1, col:ci});
+      const target = MESES_NORM[i], targetAbr = MESES_ABR_NORM[i];
+      let col = -1;
+      for(let c=0;c<headers.length;c++){
+        const h = normH(headers[c]);
+        if(h === target || h === targetAbr || h.startsWith(target+' ') || h.startsWith(targetAbr+' ') || h === target+'.' || h === targetAbr+'.'){ col = c; break; }
+      }
+      if(col >= 0) mesCols.push({mes:i+1, col});
     });
-    for(let r=7;r<aoa.length;r++){
+    if(mesCols.length === 0) toast('Atención: PMP_2026 — no se detectaron columnas de mes. Revisa los encabezados.','warn');
+    for(let r=hdrRow+1;r<aoa.length;r++){
       const row = aoa[r];
       if(!row || row.every(v => v==='' || v==null)) continue;
       // Skip filas con encabezados/notas (sin equipo y sin serie)
